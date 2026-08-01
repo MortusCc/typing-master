@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+body {
+  margin: 0;
+  font-family:
+    "Segoe UI",
+    "PingFang SC",
+    "Microsoft YaHei",
+    system-ui,
+    -apple-system,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Virtual keyboard key animations */
+@keyframes key-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px #3b82f6;
+  }
+  50% {
+    box-shadow: 0 0 0 4px #93c5fd, 0 0 12px #3b82f6;
+  }
+}
+
+@keyframes key-correct-flash {
+  0% {
+    background-color: #22c55e;
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes key-error-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+    background-color: #ef4444;
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+}
+
+.key-next {
+  animation: key-pulse 1.2s ease-in-out infinite;
+}
+
+.key-correct {
+  animation: key-correct-flash 200ms ease-out;
+}
+
+.key-error {
+  animation: key-error-shake 200ms ease-out;
+}

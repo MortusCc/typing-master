@@ -1,0 +1,162 @@
+import { create } from "zustand";
+import type { EngineState, KeyResult, PracticeMode, TypingSession } from "../types/typing.ts";
+import { generateId } from "../services/db/repositories.ts";
+
+interface TypingStore {
+  state: EngineState;
+  mode: PracticeMode;
+  materialId: string | null;
+  materialName: string;
+  target: string;
+  input: string;
+  cursor: number;
+  startTime: number | null;
+  wpm: number;
+  accuracy: number;
+  nextKey: string | null;
+  lastKeyResult: "correct" | "error" | null;
+  errorCount: number;
+  totalKeystrokes: number;
+
+  init: (target: string, materialId: string, materialName: string, mode: PracticeMode) => void;
+  handleKey: (key: string) => KeyResult;
+  handleBackspace: () => void;
+  reset: () => void;
+  getSession: () => TypingSession | null;
+}
+
+export const useTypingStore = create<TypingStore>((set, get) => ({
+  state: "idle",
+  mode: "sequential",
+  materialId: null,
+  materialName: "",
+  target: "",
+  input: "",
+  cursor: 0,
+  startTime: null,
+  wpm: 0,
+  accuracy: 100,
+  nextKey: null,
+  lastKeyResult: null,
+  errorCount: 0,
+  totalKeystrokes: 0,
+
+  init: (target, materialId, materialName, mode) => {
+    set({
+      state: "running",
+      mode,
+      materialId,
+      materialName,
+      target,
+      input: "",
+      cursor: 0,
+      startTime: Date.now(),
+      wpm: 0,
+      accuracy: 100,
+      nextKey: target[0] ?? null,
+      lastKeyResult: null,
+      errorCount: 0,
+      totalKeystrokes: 0,
+    });
+  },
+
+  handleKey: (key) => {
+    const { state, target, cursor, startTime, totalKeystrokes, errorCount } = get();
+    if (state !== "running") return { type: "finished", nextChar: null };
+
+    const targetChar = target[cursor];
+    if (targetChar === undefined) {
+      set({ state: "finished", nextKey: null });
+      return { type: "finished", nextChar: null };
+    }
+
+    const isCorrect = key === targetChar;
+    const newCursor = cursor + 1;
+    const newTotalKeystrokes = totalKeystrokes + 1;
+    const newErrorCount = isCorrect ? errorCount : errorCount + 1;
+    const newInput = get().input + key;
+
+    // Calculate WPM
+    const elapsed = (Date.now() - (startTime ?? Date.now())) / 1000 / 60; // minutes
+    const grossWpm = elapsed > 0 ? (newTotalKeystrokes / 5) / elapsed : 0;
+    const newAccuracy =
+      newTotalKeystrokes > 0
+        ? Math.round(((newTotalKeystrokes - newErrorCount) / newTotalKeystrokes) * 100)
+        : 100;
+
+    const finished = newCursor >= target.length;
+    const nextChar = finished ? null : target[newCursor] ?? null;
+
+    set({
+      input: newInput,
+      cursor: newCursor,
+      totalKeystrokes: newTotalKeystrokes,
+      errorCount: newErrorCount,
+      wpm: Math.round(grossWpm),
+      accuracy: newAccuracy,
+      nextKey: nextChar,
+      lastKeyResult: isCorrect ? "correct" : "error",
+      state: finished ? "finished" : "running",
+    });
+
+    return {
+      type: finished ? "finished" : isCorrect ? "correct" : "incorrect",
+      nextChar,
+    };
+  },
+
+  handleBackspace: () => {
+    const { state, cursor, input, target } = get();
+    if (state !== "running" || cursor <= 0) return;
+
+    const newCursor = cursor - 1;
+    const newInput = input.slice(0, -1);
+
+    set({
+      input: newInput,
+      cursor: newCursor,
+      nextKey: target[newCursor] ?? null,
+      lastKeyResult: null,
+      // Don't change totalKeystrokes on backspace
+    });
+  },
+
+  reset: () => {
+    set({
+      state: "idle",
+      materialId: null,
+      materialName: "",
+      target: "",
+      input: "",
+      cursor: 0,
+      startTime: null,
+      wpm: 0,
+      accuracy: 100,
+      nextKey: null,
+      lastKeyResult: null,
+      errorCount: 0,
+      totalKeystrokes: 0,
+    });
+  },
+
+  getSession: () => {
+    const { materialId, materialName, mode, startTime, target, cursor, wpm, accuracy, errorCount, state } = get();
+    if (!materialId || !startTime) return null;
+
+    return {
+      id: generateId(),
+      materialId,
+      materialName,
+      mode,
+      startedAt: startTime,
+      finishedAt: state === "finished" ? Date.now() : null,
+      totalChars: target.length,
+      correctChars: cursor - errorCount,
+      errorChars: errorCount,
+      wpm,
+      accuracy,
+      duration: state === "finished" ? Date.now() - startTime : 0,
+      errorDetails: [],
+    };
+  },
+}));
