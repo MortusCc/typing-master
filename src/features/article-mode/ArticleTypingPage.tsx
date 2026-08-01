@@ -69,7 +69,11 @@ export default function ArticleTypingPage() {
       if (e.key === "CapsLock") { setCapsOn(e.getModifierState?.("CapsLock") ?? false); return; }
       if (e.isComposing || e.key === "Dead") return;
       if (e.key === "Backspace") { e.preventDefault(); typing.handleBackspace(); return; }
-      if (e.key === "Enter") { e.preventDefault(); advance(); return; }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (typing.cursor >= typing.target.length && typing.target.length > 0) advance();
+        return;
+      }
       if (e.key.length === 1) {
         e.preventDefault(); typing.handleKey(e.key);
         const ni = typing.input + e.key;
@@ -85,14 +89,6 @@ export default function ArticleTypingPage() {
     window.addEventListener("keyup", keyup);
     return () => { window.removeEventListener("keydown", handler); window.removeEventListener("keyup", keyup); };
   }, [typing, showResult, advance]);
-
-  // Auto-advance when paragraph is finished
-  useEffect(() => {
-    if (typing.cursor > 0 && typing.cursor >= typing.target.length && typing.target.length > 0) {
-      const t = setTimeout(() => advance(), 250);
-      return () => clearTimeout(t);
-    }
-  }, [typing.cursor, typing.target.length, advance]);
 
   useEffect(() => {
     const cs = () => setComposing(true);
