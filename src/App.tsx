@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout.tsx";
 import { DashboardPage } from "./features/dashboard/DashboardPage.tsx";
-import { WordTypingPage } from "./features/word-mode/WordTypingPage.tsx";
+import WordTypingPage from "./features/word-mode/WordTypingPage.tsx";
 import { ArticleTypingPage } from "./features/article-mode/ArticleTypingPage.tsx";
 import { MaterialListPage } from "./features/material/MaterialListPage.tsx";
 import { StatsPage } from "./features/stats/StatsPage.tsx";
