@@ -1,9 +1,9 @@
-import type { Material } from "../types/material.ts";
+﻿import type { Material } from "../types/material.ts";
 import { defaultEnglishSentences } from "./defaultEnglishSentences.ts";
 import { defaultChineseArticles } from "./defaultChineseArticles.ts";
 import { defaultEnglishFables } from "./defaultEnglishFables.ts";
 
-export const DEFAULT_MATERIALS_VERSION = "v1";
+export const DEFAULT_MATERIALS_VERSION = "v2";
 
 export interface DefaultMaterialDef {
   id: string;

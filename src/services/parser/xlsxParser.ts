@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+﻿import * as XLSX from "xlsx";
 import type { WordEntry } from "../../types/material.ts";
 
 export interface XlsxPreview {
