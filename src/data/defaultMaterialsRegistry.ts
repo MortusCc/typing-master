@@ -13,6 +13,7 @@ export interface DefaultMaterialDef {
 }
 
 export const DEFAULT_MATERIALS: DefaultMaterialDef[] = [
+  {
  
     id: "builtin-en-sentences",
     name: "英文短句练习",
