@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { VirtualKeyboard } from "../../components/typing/VirtualKeyboard.tsx";
 import { StatsBar } from "../../components/typing/StatsBar.tsx";
@@ -61,7 +61,7 @@ export default function WordTypingPage() {
 
   const submitWord = useCallback(() => {
     if (typing.state !== "running") return;
-    const isCorrect = typing.input === typing.target;
+    const isCorrect = typing.input.trim() === typing.target.trim();
     if (isCorrect) {
       setFeedback("correct");
       feedbackTimer.current = setTimeout(() => {
@@ -102,9 +102,8 @@ export default function WordTypingPage() {
       }
       if (e.key.length === 1) {
         e.preventDefault();
-        const result = typing.handleKey(e.key);
-        if (result.type === "finished") submitWord();
-      }
+        typing.handleKey(e.key);
+        }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);

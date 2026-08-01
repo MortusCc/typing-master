@@ -1,4 +1,4 @@
-import { create } from "zustand";
+﻿import { create } from "zustand";
 import type { EngineState, KeyResult, PracticeMode, TypingSession } from "../types/typing.ts";
 import { generateId } from "../services/db/repositories.ts";
 
@@ -65,12 +65,8 @@ export const useTypingStore = create<TypingStore>((set, get) => ({
     if (state !== "running") return { type: "finished", nextChar: null };
 
     const targetChar = target[cursor];
-    if (targetChar === undefined) {
-      set({ state: "finished", nextKey: null });
-      return { type: "finished", nextChar: null };
-    }
-
-    const isCorrect = key === targetChar;
+    // Allow input beyond target length (for corrections)
+    const isCorrect = targetChar !== undefined && key === targetChar;
     const newCursor = cursor + 1;
     const newTotalKeystrokes = totalKeystrokes + 1;
     const newErrorCount = isCorrect ? errorCount : errorCount + 1;
@@ -84,8 +80,8 @@ export const useTypingStore = create<TypingStore>((set, get) => ({
         ? Math.round(((newTotalKeystrokes - newErrorCount) / newTotalKeystrokes) * 100)
         : 100;
 
-    const finished = newCursor >= target.length;
-    const nextChar = finished ? null : target[newCursor] ?? null;
+    const finished = false; // never auto-finish, wait for Enter
+    const nextChar = target[newCursor] ?? null;
 
     set({
       input: newInput,
@@ -96,7 +92,7 @@ export const useTypingStore = create<TypingStore>((set, get) => ({
       accuracy: newAccuracy,
       nextKey: nextChar,
       lastKeyResult: isCorrect ? "correct" : "error",
-      state: finished ? "finished" : "running",
+      state: "running",
     });
 
     return {

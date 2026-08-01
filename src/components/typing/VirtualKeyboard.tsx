@@ -1,4 +1,4 @@
-﻿import { memo } from "react";
+import { memo } from "react";
 import { KEYBOARD_ROWS, FINGER_ZONES } from "../../services/keyboardLayout.ts";
 
 interface VirtualKeyboardProps {
@@ -8,7 +8,8 @@ interface VirtualKeyboardProps {
   disabled?: boolean;
 }
 
-const MOD_ROW = ["Esc", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"];
+
+
 const BOTTOM_MODS = ["Ctrl", "Win", "Alt", "Space", "Alt", "Win", "Menu", "Ctrl"];
 
 export const VirtualKeyboard = memo(function VirtualKeyboard({
@@ -40,9 +41,6 @@ export const VirtualKeyboard = memo(function VirtualKeyboard({
 
   return (
     <div className="mx-auto max-w-3xl space-y-1.5 rounded-xl bg-gray-50 p-2 dark:bg-gray-900 sm:p-3">
-      <div className="flex justify-center gap-0.5 sm:gap-1">
-        {MOD_ROW.map((key) => (<div key={key} className={getModClass()}>{key}</div>))}
-      </div>
       {KEYBOARD_ROWS.map((row, ri) => (
         <div key={ri} className="flex justify-center gap-0.5 sm:gap-1">
           {ri === 0 && <div className={getModClass() + " min-w-[2rem] sm:min-w-[2.8rem]"}>`</div>}

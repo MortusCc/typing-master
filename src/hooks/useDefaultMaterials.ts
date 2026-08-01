@@ -26,7 +26,7 @@ export function useDefaultMaterials() {
         for (const def of DEFAULT_MATERIALS) {
           const existing = await getMaterialById(def.id);
           if (!existing) {
-            const material = def.buildMaterial();
+            const material = await def.buildMaterial();
             await saveMaterial(material);
           }
         }
