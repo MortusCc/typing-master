@@ -69,7 +69,7 @@ export default function ArticleTypingPage() {
       if (e.key === "CapsLock") { setCapsOn(e.getModifierState?.("CapsLock") ?? false); return; }
       if (e.isComposing || e.key === "Dead") return;
       if (e.key === "Backspace") { e.preventDefault(); typing.handleBackspace(); return; }
-      if (e.key === "Enter" && e.ctrlKey) { e.preventDefault(); advance(); return; }
+      if (e.key === "Enter") { e.preventDefault(); advance(); return; }
       if (e.key.length === 1) {
         e.preventDefault(); typing.handleKey(e.key);
         const ni = typing.input + e.key;
@@ -85,6 +85,14 @@ export default function ArticleTypingPage() {
     window.addEventListener("keyup", keyup);
     return () => { window.removeEventListener("keydown", handler); window.removeEventListener("keyup", keyup); };
   }, [typing, showResult, advance]);
+
+  // Auto-advance when paragraph is finished
+  useEffect(() => {
+    if (typing.cursor > 0 && typing.cursor >= typing.target.length && typing.target.length > 0) {
+      const t = setTimeout(() => advance(), 250);
+      return () => clearTimeout(t);
+    }
+  }, [typing.cursor, typing.target.length, advance]);
 
   useEffect(() => {
     const cs = () => setComposing(true);
@@ -119,7 +127,7 @@ export default function ArticleTypingPage() {
         <ArticleView paragraph={cur} translation={translations[paraIdx]} input={typing.input}
           cursor={typing.cursor} errorIndices={errorIndices} paragraphIndex={paraIdx}
           totalParagraphs={paragraphs.length} composing={composing} />
-        <div className="text-center text-xs text-gray-400">Ctrl+Enter to skip paragraph</div>
+        <div className="text-center text-xs text-gray-400">Enter to next paragraph</div>
         <VirtualKeyboard nextKey={typing.nextKey} lastKeyResult={typing.lastKeyResult}
           shiftKey={shiftDown} capsLock={capsOn} disabled={composing} />
       </>)}
