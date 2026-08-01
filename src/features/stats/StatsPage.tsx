@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useStatsStore } from "../../stores/statsStore.ts";
 import { Card } from "../../components/ui/Card.tsx";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -41,14 +41,14 @@ export default function StatsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Statistics</h1>
+      <h1 className="text-2xl font-bold">统计</h1>
 
-      {loading && <p className="text-gray-400">Loading...</p>}
+      {loading && <p className="text-gray-400">加载中...</p>}
 
       {!loading && !overview && (
         <div className="py-20 text-center text-gray-400">
-          <p className="text-4xl mb-3">[No Data]</p>
-          <p>No typing data yet. Start practicing!</p>
+          <p className="text-4xl mb-3">暂无数据</p>
+          <p>还没有练习记录，开始打字吧!</p>
         </div>
       )}
 
@@ -57,25 +57,25 @@ export default function StatsPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <Card>
               <p className="text-2xl font-bold text-indigo-600">{overview.total}</p>
-              <p className="text-xs text-gray-500">Total Sessions</p>
+              <p className="text-xs text-gray-500">总次数</p>
             </Card>
             <Card>
               <p className="text-2xl font-bold text-green-600">{overview.avgWpm}</p>
-              <p className="text-xs text-gray-500">Avg WPM</p>
+              <p className="text-xs text-gray-500">平均速度</p>
             </Card>
             <Card>
               <p className="text-2xl font-bold text-amber-600">{overview.avgAcc}%</p>
-              <p className="text-xs text-gray-500">Avg Accuracy</p>
+              <p className="text-xs text-gray-500">平均正确率</p>
             </Card>
             <Card>
               <p className="text-2xl font-bold text-blue-600">{overview.mins}m</p>
-              <p className="text-xs text-gray-500">Total Time</p>
+              <p className="text-xs text-gray-500">总时长</p>
             </Card>
           </div>
 
           {trend.length > 1 && (
             <Card>
-              <h2 className="mb-3 font-semibold text-sm text-gray-500">Trend (Last 14 Days)</h2>
+              <h2 className="mb-3 font-semibold text-sm text-gray-500">趋势 (近14天)</h2>
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={trend}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -91,7 +91,7 @@ export default function StatsPage() {
           )}
 
           <div className="space-y-2">
-            <h2 className="font-semibold text-sm text-gray-500">Recent Sessions</h2>
+            <h2 className="font-semibold text-sm text-gray-500">最近记录</h2>
             {recentSessions.slice(0, 20).map((s) => (
               <Card key={s.id} hover>
                 <div className="flex items-center justify-between text-sm">

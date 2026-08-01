@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStatsStore } from "../../stores/statsStore.ts";
 import { useMaterialStore } from "../../stores/materialStore.ts";
@@ -36,45 +36,45 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Welcome!</h1>
+      <h1 className="text-2xl font-bold">欢迎!</h1>
 
       {today ? (
         <div className="grid grid-cols-4 gap-3">
           <Card>
             <p className="text-xl font-bold text-indigo-600">{today.count}</p>
-            <p className="text-xs text-gray-500">Today Sessions</p>
+            <p className="text-xs text-gray-500">今日练习</p>
           </Card>
           <Card>
             <p className="text-xl font-bold text-green-600">{today.avgWpm}</p>
-            <p className="text-xs text-gray-500">Avg WPM</p>
+            <p className="text-xs text-gray-500">平均速度</p>
           </Card>
           <Card>
             <p className="text-xl font-bold text-amber-600">{today.avgAcc}%</p>
-            <p className="text-xs text-gray-500">Avg Accuracy</p>
+            <p className="text-xs text-gray-500">平均正确率</p>
           </Card>
           <Card>
             <p className="text-xl font-bold text-blue-600">{today.mins}m</p>
-            <p className="text-xs text-gray-500">Time Today</p>
+            <p className="text-xs text-gray-500">今日时长</p>
           </Card>
         </div>
       ) : (
         <Card>
-          <p className="text-center text-gray-400 py-6">No practice today. Start typing!</p>
+          <p className="text-center text-gray-400 py-6">今日尚未练习，开始打字吧!</p>
         </Card>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Button size="lg" onClick={() => navigate("/word")} className="h-24 text-lg">
-          Word Typing
+          单词打字
         </Button>
         <Button size="lg" onClick={() => navigate("/article")} className="h-24 text-lg">
-          Article Typing
+          文章打字
         </Button>
       </div>
 
       {recentMaterials.length > 0 && (
         <div>
-          <h2 className="mb-3 text-sm font-semibold text-gray-500">Recent Materials</h2>
+          <h2 className="mb-3 text-sm font-semibold text-gray-500">最近素材</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {recentMaterials.map((m) => (
               <Card key={m.id} hover>
@@ -86,7 +86,7 @@ export default function DashboardPage() {
                     {m.type === "wordlist" ? "Word" : "Article"} {m.name}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    {m.wordCount != null ? `${m.wordCount} chars` : "—"}
+                    {m.wordCount != null ? `${m.wordCount} 字` : "—"}
                   </p>
                 </div>
               </Card>

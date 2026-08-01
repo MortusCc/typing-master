@@ -142,13 +142,13 @@ export default function WordTypingPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Word Typing</h1>
+        <h1 className="text-xl font-bold">单词打字</h1>
         <select
           value={selectedId}
           onChange={(e) => handleSelectMaterial(e.target.value)}
           className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800"
         >
-          <option value="">Select material...</option>
+          <option value="">选择素材...</option>
           {wordlists.map((m) => (
             <option key={m.id} value={m.id}>{m.name}</option>
           ))}
@@ -157,7 +157,7 @@ export default function WordTypingPage() {
 
       {!selectedId && (
         <div className="py-20 text-center text-gray-400">
-          Select a wordlist to start typing
+          选择一个单词表开始练习
         </div>
       )}
 
@@ -172,12 +172,12 @@ export default function WordTypingPage() {
 
           {feedback === "correct" && (
             <div className="rounded-lg bg-green-50 px-4 py-2 text-center text-green-700 dark:bg-green-950 dark:text-green-300">
-              Correct!
+              正确!
             </div>
           )}
           {feedback === "error" && (
             <div className="rounded-lg bg-red-50 px-4 py-2 text-center text-red-700 dark:bg-red-950 dark:text-red-300">
-              Wrong! The answer is: <span className="font-mono font-bold">{typing.target}</span>
+              错误! 正确答案: <span className="font-mono font-bold">{typing.target}</span>
             </div>
           )}
 

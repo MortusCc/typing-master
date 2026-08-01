@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 
 interface ArticleViewProps {
   paragraph: string;
@@ -21,7 +21,7 @@ export function ArticleView({
   totalParagraphs,
   composing,
 }: ArticleViewProps) {
-  const [showTranslation, setShowTranslation] = useState(false);
+  const [showTranslation, set显示Translation] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -29,10 +29,10 @@ export function ArticleView({
         <span>Paragraph {paragraphIndex + 1} / {totalParagraphs}</span>
         {translation && (
           <button
-            onClick={() => setShowTranslation(!showTranslation)}
+            onClick={() => set显示Translation(!showTranslation)}
             className="text-indigo-500 hover:underline text-xs"
           >
-            {showTranslation ? "Hide" : "Show"} Translation
+            {showTranslation ? "隐藏" : "显示"} 翻译
           </button>
         )}
       </div>
@@ -68,7 +68,7 @@ export function ArticleView({
 
       <div className="font-mono text-lg text-gray-500 dark:text-gray-400 min-h-[2rem]">
         {composing ? (
-          <span className="text-blue-500 animate-pulse">Composing...</span>
+          <span className="text-blue-500 animate-pulse">输入中...</span>
         ) : (
           <>
             {input}

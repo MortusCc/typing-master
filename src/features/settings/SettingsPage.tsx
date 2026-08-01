@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { Card } from "../../components/ui/Card.tsx";
 import { Button } from "../../components/ui/Button.tsx";
 import { db } from "../../services/db/database.ts";
@@ -6,7 +6,7 @@ import { saveMaterial } from "../../services/db/repositories.ts";
 import type { Material } from "../../types/material.ts";
 import type { TypingSession } from "../../types/typing.ts";
 
-export default function SettingsPage() {
+export default function 设置Page() {
   const [msg, setMsg] = useState("");
 
   const handleExport = async () => {
@@ -21,9 +21,9 @@ export default function SettingsPage() {
       a.download = `typing-master-backup-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      setMsg("Data exported successfully!");
+      setMsg("数据导出成功!");
     } catch (e) {
-      setMsg("Export failed: " + String(e));
+      setMsg("导出失败: " + String(e));
     }
   };
 
@@ -43,24 +43,24 @@ export default function SettingsPage() {
           await db.sessions.put(s);
         }
       }
-      setMsg(`Imported ${data.materials?.length ?? 0} materials and ${data.sessions?.length ?? 0} sessions.`);
+      setMsg(`已导入 ${data.materials?.length ?? 0} 个素材和 ${data.sessions?.length ?? 0} 条记录。`);
     } catch (err) {
-      setMsg("Import failed: " + String(err));
+      setMsg("导入失败: " + String(err));
     }
   };
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Settings</h1>
+      <h1 className="text-2xl font-bold">设置</h1>
 
       <Card>
-        <h2 className="mb-3 font-semibold">Data Backup</h2>
-        <p className="mb-3 text-sm text-gray-500">Export all your materials and typing history as a JSON file, or import a previous backup.</p>
+        <h2 className="mb-3 font-semibold">数据备份</h2>
+        <p className="mb-3 text-sm text-gray-500">导出所有素材和练习记录为 JSON 文件，或导入之前的备份。</p>
         <div className="flex gap-3">
-          <Button onClick={handleExport}>Export Data (JSON)</Button>
+          <Button onClick={handleExport}>导出数据 (JSON)</Button>
           <label className="cursor-pointer">
             <Button variant="secondary" onClick={() => document.getElementById("import-file")?.click()}>
-              Import Data
+              导入数据
             </Button>
             <input id="import-file" type="file" accept=".json" onChange={handleImport} className="hidden" />
           </label>
@@ -69,7 +69,7 @@ export default function SettingsPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-red-600">Danger Zone</h2>
+        <h2 className="mb-3 font-semibold text-red-600">危险操作</h2>
         <p className="mb-3 text-sm text-gray-500">Clear all local data. This cannot be undone. Make sure to export a backup first.</p>
         <Button
           variant="ghost"
@@ -81,7 +81,7 @@ export default function SettingsPage() {
             window.location.reload();
           }}
         >
-          Clear All Data
+          清除所有数据
         </Button>
       </Card>
     </div>

@@ -1,4 +1,4 @@
-﻿import { memo } from "react";
+import { memo } from "react";
 import { KEYBOARD_ROWS, FINGER_ZONES } from "../../services/keyboardLayout.ts";
 
 interface VirtualKeyboardProps {
@@ -72,7 +72,7 @@ export const VirtualKeyboard = memo(function VirtualKeyboard({
           {row.map((key) => (
             <div key={key} className={getKeyClass(key)}>
               {key === "Space" ? (
-                <span className="text-[0.55rem] text-gray-400 dark:text-gray-500">Space</span>
+                <span className="text-[0.55rem] text-gray-400 dark:text-gray-500">空格</span>
               ) : (
                 formatKey(key)
               )}

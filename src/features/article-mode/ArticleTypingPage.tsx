@@ -110,43 +110,43 @@ export default function ArticleTypingPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Article Typing</h1>
+        <h1 className="text-xl font-bold">文章打字</h1>
         <select value={selectedId} onChange={(e) => handleSelect(e.target.value)}
           className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800">
-          <option value="">Select...</option>
+          <option value="">选择...</option>
           {articles.map((m) => (<option key={m.id} value={m.id}>{m.name}</option>))}
         </select>
       </div>
-      {!selectedId && (<div className="py-20 text-center text-gray-400">Select an article to start typing</div>)}
+      {!selectedId && (<div className="py-20 text-center text-gray-400">选择一篇文章开始练习</div>)}
       {cur && (<>
         <StatsBar wpm={typing.wpm} accuracy={typing.accuracy} current={doneChars + typing.cursor} total={totalChars} />
         <ArticleView paragraph={cur} translation={translations[paraIdx]} input={typing.input}
           cursor={typing.cursor} errorIndices={errorIndices} paragraphIndex={paraIdx}
           totalParagraphs={paragraphs.length} composing={composing} />
-        <div className="text-center text-xs text-gray-400">Enter to next paragraph</div>
+        <div className="text-center text-xs text-gray-400">按 Enter 进入下一段</div>
         <VirtualKeyboard nextKey={typing.nextKey} lastKeyResult={typing.lastKeyResult}
           shiftKey={shiftDown} capsLock={capsOn} disabled={composing} />
       </>)}
       {showResult && (
-        <Modal open={showResult} onClose={handleBack} title="Result">
+        <Modal open={showResult} onClose={handleBack} title="成绩单">
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-3 text-center">
               <div className="rounded-lg bg-indigo-50 p-3 dark:bg-indigo-950">
                 <p className="text-2xl font-bold text-indigo-600">{session?.wpm ?? 0}</p>
-                <p className="text-xs text-gray-500">WPM</p>
+                <p className="text-xs text-gray-500">速度</p>
               </div>
               <div className="rounded-lg bg-green-50 p-3 dark:bg-green-950">
                 <p className="text-2xl font-bold text-green-600">{session?.accuracy ?? 100}%</p>
-                <p className="text-xs text-gray-500">Accuracy</p>
+                <p className="text-xs text-gray-500">正确率</p>
               </div>
               <div className="rounded-lg bg-amber-50 p-3 dark:bg-amber-950">
                 <p className="text-2xl font-bold text-amber-600">{totalChars}</p>
-                <p className="text-xs text-gray-500">Chars</p>
+                <p className="text-xs text-gray-500">字符数</p>
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="ghost" onClick={handleBack}>Back</Button>
-              <Button onClick={handleRestart}>Again</Button>
+              <Button variant="ghost" onClick={handleBack}>返回</Button>
+              <Button onClick={handleRestart}>再来一次</Button>
             </div>
           </div>
         </Modal>
