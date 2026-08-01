@@ -1,19 +1,117 @@
+﻿import { useEffect, useMemo } from "react";
+import { useStatsStore } from "../../stores/statsStore.ts";
 import { Card } from "../../components/ui/Card.tsx";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
-export function StatsPage() {
+export default function StatsPage() {
+  const { recentSessions, loading, loadRecent } = useStatsStore();
+
+  useEffect(() => { loadRecent(); }, [loadRecent]);
+
+  // Overview stats
+  const overview = useMemo(() => {
+    if (!recentSessions.length) return null;
+    const total = recentSessions.length;
+    const avgWpm = Math.round(recentSessions.reduce((s, x) => s + x.wpm, 0) / total);
+    const avgAcc = Math.round(recentSessions.reduce((s, x) => s + x.accuracy, 0) / total);
+    const totalTime = recentSessions.reduce((s, x) => s + x.duration, 0);
+    const mins = Math.floor(totalTime / 60000);
+    return { total, avgWpm, avgAcc, mins };
+  }, [recentSessions]);
+
+  // Trend data (last 14 days)
+  const trend = useMemo(() => {
+    const map = new Map<string, { wpm: number; acc: number; count: number }>();
+    for (const s of recentSessions) {
+      const d = new Date(s.startedAt).toISOString().slice(0, 10);
+      const e = map.get(d) ?? { wpm: 0, acc: 0, count: 0 };
+      e.wpm += s.wpm;
+      e.acc += s.accuracy;
+      e.count++;
+      map.set(d, e);
+    }
+    return [...map.entries()]
+      .map(([date, v]) => ({
+        date: date.slice(5),
+        WPM: Math.round(v.wpm / v.count),
+        Accuracy: Math.round(v.acc / v.count),
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }, [recentSessions]);
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-        统计与历史
-      </h1>
-      <Card>
-        <div className="text-center py-20 text-gray-400 dark:text-gray-500">
-          <p className="text-lg mb-2">Phase 4 — 即将实现</p>
-          <p className="text-sm">
-            完成后将展示打字速度趋势图与历史记录
-          </p>
+      <h1 className="text-2xl font-bold">Statistics</h1>
+
+      {loading && <p className="text-gray-400">Loading...</p>}
+
+      {!loading && !overview && (
+        <div className="py-20 text-center text-gray-400">
+          <p className="text-4xl mb-3">馃搳</p>
+          <p>No typing data yet. Start practicing!</p>
         </div>
-      </Card>
+      )}
+
+      {overview && (
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Card>
+              <p className="text-2xl font-bold text-indigo-600">{overview.total}</p>
+              <p className="text-xs text-gray-500">Total Sessions</p>
+            </Card>
+            <Card>
+              <p className="text-2xl font-bold text-green-600">{overview.avgWpm}</p>
+              <p className="text-xs text-gray-500">Avg WPM</p>
+            </Card>
+            <Card>
+              <p className="text-2xl font-bold text-amber-600">{overview.avgAcc}%</p>
+              <p className="text-xs text-gray-500">Avg Accuracy</p>
+            </Card>
+            <Card>
+              <p className="text-2xl font-bold text-blue-600">{overview.mins}m</p>
+              <p className="text-xs text-gray-500">Total Time</p>
+            </Card>
+          </div>
+
+          {trend.length > 1 && (
+            <Card>
+              <h2 className="mb-3 font-semibold text-sm text-gray-500">Trend (Last 14 Days)</h2>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={trend}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" fontSize={12} />
+                  <YAxis yAxisId="wpm" fontSize={12} />
+                  <YAxis yAxisId="acc" orientation="right" domain={[0, 100]} fontSize={12} />
+                  <Tooltip />
+                  <Line yAxisId="wpm" type="monotone" dataKey="WPM" stroke="#6366f1" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line yAxisId="acc" type="monotone" dataKey="Accuracy" stroke="#22c55e" strokeWidth={2} dot={{ r: 3 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </Card>
+          )}
+
+          <div className="space-y-2">
+            <h2 className="font-semibold text-sm text-gray-500">Recent Sessions</h2>
+            {recentSessions.slice(0, 20).map((s) => (
+              <Card key={s.id} hover>
+                <div className="flex items-center justify-between text-sm">
+                  <div>
+                    <span className="font-medium">{s.materialName}</span>
+                    <span className="ml-2 text-gray-400">
+                      {new Date(s.startedAt).toLocaleDateString("zh-CN")}
+                    </span>
+                  </div>
+                  <div className="flex gap-4 text-xs text-gray-500">
+                    <span>{s.wpm} WPM</span>
+                    <span>{s.accuracy}%</span>
+                    <span>{Math.round(s.duration / 1000)}s</span>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

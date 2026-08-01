@@ -1,43 +1,99 @@
+﻿import { useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useStatsStore } from "../../stores/statsStore.ts";
+import { useMaterialStore } from "../../stores/materialStore.ts";
 import { Card } from "../../components/ui/Card.tsx";
 import { Button } from "../../components/ui/Button.tsx";
-import { Link } from "react-router-dom";
 
-export function DashboardPage() {
+export default function DashboardPage() {
+  const navigate = useNavigate();
+  const { recentSessions, loadRecent } = useStatsStore();
+  const { materials, refresh } = useMaterialStore();
+
+  useEffect(() => { loadRecent(); refresh(); }, [loadRecent, refresh]);
+
+  const today = useMemo(() => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const todays = recentSessions.filter(
+      (s) => new Date(s.startedAt).toISOString().slice(0, 10) === todayStr,
+    );
+    if (!todays.length) return null;
+    const avgWpm = Math.round(todays.reduce((a, s) => a + s.wpm, 0) / todays.length);
+    const avgAcc = Math.round(todays.reduce((a, s) => a + s.accuracy, 0) / todays.length);
+    const totalTime = todays.reduce((a, s) => a + s.duration, 0);
+    return {
+      count: todays.length,
+      avgWpm,
+      avgAcc,
+      mins: Math.floor(totalTime / 60000),
+    };
+  }, [recentSessions]);
+
+  const recentMaterials = useMemo(
+    () => materials.slice(0, 4),
+    [materials],
+  );
+
   return (
     <div className="space-y-6">
-      <div className="text-center py-12">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3">
-          ⌨️ 打字大师
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 text-lg mb-8">
-          提升打字速度，从今天开始
-        </p>
-        <div className="flex items-center justify-center gap-4">
-          <Link to="/word">
-            <Button size="lg">开始单词练习</Button>
-          </Link>
-          <Link to="/article">
-            <Button variant="secondary" size="lg">
-              开始文章练习
-            </Button>
-          </Link>
+      <h1 className="text-2xl font-bold">Welcome!</h1>
+
+      {today ? (
+        <div className="grid grid-cols-4 gap-3">
+          <Card>
+            <p className="text-xl font-bold text-indigo-600">{today.count}</p>
+            <p className="text-xs text-gray-500">Today Sessions</p>
+          </Card>
+          <Card>
+            <p className="text-xl font-bold text-green-600">{today.avgWpm}</p>
+            <p className="text-xs text-gray-500">Avg WPM</p>
+          </Card>
+          <Card>
+            <p className="text-xl font-bold text-amber-600">{today.avgAcc}%</p>
+            <p className="text-xs text-gray-500">Avg Accuracy</p>
+          </Card>
+          <Card>
+            <p className="text-xl font-bold text-blue-600">{today.mins}m</p>
+            <p className="text-xs text-gray-500">Time Today</p>
+          </Card>
         </div>
+      ) : (
+        <Card>
+          <p className="text-center text-gray-400 py-6">No practice today. Start typing!</p>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Button size="lg" onClick={() => navigate("/word")} className="h-24 text-lg">
+          馃敜 Word Typing
+        </Button>
+        <Button size="lg" onClick={() => navigate("/article")} className="h-24 text-lg">
+          馃搫 Article Typing
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">0</div>
-          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">今日练习次数</div>
-        </Card>
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-green-600 dark:text-green-400">--</div>
-          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">平均 WPM</div>
-        </Card>
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">--</div>
-          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">平均正确率</div>
-        </Card>
-      </div>
+      {recentMaterials.length > 0 && (
+        <div>
+          <h2 className="mb-3 text-sm font-semibold text-gray-500">Recent Materials</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {recentMaterials.map((m) => (
+              <Card key={m.id} hover>
+                <div
+                  className="cursor-pointer"
+                  onClick={() => navigate(m.type === "wordlist" ? "/word" : "/article")}
+                >
+                  <p className="font-medium text-sm">
+                    {m.type === "wordlist" ? "Word" : "Article"} {m.name}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {m.wordCount != null ? `${m.wordCount} chars` : "—"}
+                  </p>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
