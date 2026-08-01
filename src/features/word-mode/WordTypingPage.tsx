@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { VirtualKeyboard } from "../../components/typing/VirtualKeyboard.tsx";
 import { StatsBar } from "../../components/typing/StatsBar.tsx";
@@ -25,6 +25,8 @@ export default function WordTypingPage() {
   const [session, setSession] = useState<TypingSession | null>(null);
   const [feedback, setFeedback] = useState<"correct" | "error" | null>(null);
   const [errorIndices, setErrorIndices] = useState<Set<number>>(new Set());
+  const [shiftDown, setShiftDown] = useState(false);
+  const [capsOn, setCapsOn] = useState(false);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { refresh(); }, [refresh]);
@@ -90,6 +92,7 @@ export default function WordTypingPage() {
     const handler = (e: KeyboardEvent) => {
       if (showResult) return;
       if (e.isComposing || e.key === "Dead") return;
+      if (e.key === "Shift") { setShiftDown(true); return; }
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         submitWord();
@@ -105,8 +108,13 @@ export default function WordTypingPage() {
         typing.handleKey(e.key);
         }
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    const keyup = (e: KeyboardEvent) => {
+        if (e.key === "Shift") setShiftDown(false);
+        if (e.key === "CapsLock") setCapsOn(e.getModifierState?.("CapsLock") ?? false);
+      };
+      window.addEventListener("keydown", handler);
+      window.addEventListener("keyup", keyup);
+    return () => { window.removeEventListener("keydown", handler); window.removeEventListener("keyup", keyup); };
   }, [typing, submitWord, showResult]);
 
   useEffect(() => {
@@ -185,6 +193,8 @@ export default function WordTypingPage() {
           <VirtualKeyboard
             nextKey={typing.nextKey}
             lastKeyResult={typing.lastKeyResult}
+            shiftKey={shiftDown}
+            capsLock={capsOn}
           />
         </>
       )}
