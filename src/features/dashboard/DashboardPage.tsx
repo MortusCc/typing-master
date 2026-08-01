@@ -65,10 +65,10 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Button size="lg" onClick={() => navigate("/word")} className="h-24 text-lg">
-          馃敜 Word Typing
+          Word Typing
         </Button>
         <Button size="lg" onClick={() => navigate("/article")} className="h-24 text-lg">
-          馃搫 Article Typing
+          Article Typing
         </Button>
       </div>
 

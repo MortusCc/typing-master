@@ -47,7 +47,7 @@ export default function StatsPage() {
 
       {!loading && !overview && (
         <div className="py-20 text-center text-gray-400">
-          <p className="text-4xl mb-3">馃搳</p>
+          <p className="text-4xl mb-3">[No Data]</p>
           <p>No typing data yet. Start practicing!</p>
         </div>
       )}
