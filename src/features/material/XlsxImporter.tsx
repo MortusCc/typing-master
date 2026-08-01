@@ -24,6 +24,7 @@ export function XlsxImporter({ onComplete, onCancel }: XlsxImporterProps) {
   const [step, setStep] = useState<"upload" | "mapping" | "confirm">("upload");
   const [entries, setEntries] = useState<WordEntry[]>([]);
   const [error, setError] = useState("");
+  const [startRow, setStartRow] = useState(2);
   const [loading, setLoading] = useState(false);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,10 +62,12 @@ export function XlsxImporter({ onComplete, onCancel }: XlsxImporterProps) {
       const workbook = XLSX.read(data, { type: "array" });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
-      const fullData = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, defval: "" });
+      const rawData = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, defval: "" });
+      // Skip rows before startRow
+      const fullData = rawData.slice(startRow) as string[][];
 
       const extracted = extractWordEntries(
-        fullData as string[][],
+        fullData,
         englishCol,
         chineseCol,
         phoneticUkCol >= 0 ? phoneticUkCol : undefined,
@@ -143,6 +146,15 @@ export function XlsxImporter({ onComplete, onCancel }: XlsxImporterProps) {
             <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">
               列映射
             </h3>
+            <div className="space-y-3">
+              <Input
+                label={`起始行（跳过前 ${startRow} 行）`}
+                type="number"
+                min={0}
+                value={startRow}
+                onChange={(e) => setStartRow(Number(e.target.value))}
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Select
                 label="英文/单词列"

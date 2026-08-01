@@ -25,7 +25,11 @@ export function useDefaultMaterials() {
         // Import defaults one by one
         for (const def of DEFAULT_MATERIALS) {
           const existing = await getMaterialById(def.id);
-          if (!existing) {
+          // Re-import if missing OR if wordlist has empty entries (v1 regression)
+          const needsRebuild =
+            !existing ||
+            (def.type === "wordlist" && (!existing.entries || existing.entries.length === 0));
+          if (needsRebuild) {
             const material = await def.buildMaterial();
             await saveMaterial(material);
           }
