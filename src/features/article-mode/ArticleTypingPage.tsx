@@ -123,6 +123,30 @@ export default function ArticleTypingPage() {
 
   return (
     <div className="space-y-4">
+      <div
+        contentEditable
+        suppressContentEditableWarning
+        ref={(el) => { if (el && document.activeElement !== el) el.focus(); }}
+        onBeforeInput={(e) => {
+          if (showResult) return;
+          const ev = e.nativeEvent as InputEvent;
+          if (ev.inputType === "insertText" || ev.inputType === "insertCompositionText" || ev.inputType === "insertFromPaste") {
+            e.preventDefault();
+            const text = ev.data ?? "";
+            for (const ch of text) getTypingState().handleKey(ch);
+            updateErrors();
+            return;
+          }
+          if (ev.inputType === "deleteContentBackward" || ev.inputType === "deleteContentForward" || ev.inputType === "deleteByCut") {
+            e.preventDefault();
+            getTypingState().handleBackspace();
+            updateErrors();
+            return;
+          }
+          if (ev.inputType?.startsWith("insert")) e.preventDefault();
+        }}
+        className="h-0 w-0 overflow-hidden opacity-0"
+      />
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Article Typing</h1>
         <select value={selectedId} onChange={(e) => handleSelect(e.target.value)}
