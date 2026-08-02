@@ -19,7 +19,7 @@ export default function DashboardPage() {
     );
     if (!todays.length) return null;
     const avgWpm = Math.round(todays.reduce((a, s) => a + s.wpm, 0) / todays.length);
-    const avgBks = Math.round(todays.reduce((a, s) => a + s.backspaceCount, 0) / todays.length);
+    const avgBks = Math.round(todays.reduce((a, s) => a + (s.totalKeystrokes > 0 ? s.backspaceCount / s.totalKeystrokes * 100 : 0), 0) / todays.length);
     const totalTime = todays.reduce((a, s) => a + s.duration, 0);
     return {
       count: todays.length,
@@ -49,8 +49,8 @@ export default function DashboardPage() {
             <p className="text-xs text-gray-500">平均速度</p>
           </Card>
           <Card>
-            <p className="text-xl font-bold text-amber-600">{today.avgBks}%</p>
-            <p className="text-xs text-gray-500">平均退格数</p>
+            <p className="text-xl font-bold text-amber-600">{today.avgBks}%%</p>
+            <p className="text-xs text-gray-500">退格率</p>
           </Card>
           <Card>
             <p className="text-xl font-bold text-blue-600">{today.mins}m</p>

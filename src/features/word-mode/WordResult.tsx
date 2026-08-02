@@ -26,8 +26,8 @@ export function WordResult({ open, session, errorWords, onRestart, onBack }: Wor
             <p className="text-xs text-gray-500">WPM</p>
           </div>
           <div className="rounded-lg bg-green-50 p-3 dark:bg-green-950">
-            <p className="text-2xl font-bold text-green-600">{session.accuracy}%</p>
-            <p className="text-xs text-gray-500">正确率</p>
+            <p className="text-2xl font-bold text-green-600">{session.backspaceCount ?? 0}</p>
+            <p className="text-xs text-gray-500">退格数</p>
           </div>
           <div className="rounded-lg bg-amber-50 p-3 dark:bg-amber-950">
             <p className="text-2xl font-bold text-amber-600">{min}:{sec.toString().padStart(2, "0")}</p>

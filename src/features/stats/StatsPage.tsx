@@ -13,7 +13,7 @@ export default function StatsPage() {
     if (!recentSessions.length) return null;
     const total = recentSessions.length;
     const avgWpm = Math.round(recentSessions.reduce((s, x) => s + x.wpm, 0) / total);
-    const avgAcc = Math.round(recentSessions.reduce((s, x) => s + x.backspaceCount, 0) / total);
+    const avgBks = Math.round(recentSessions.reduce((s, x) => s + (x.totalKeystrokes > 0 ? x.backspaceCount / x.totalKeystrokes * 100 : 0), 0) / total);
     const totalTime = recentSessions.reduce((s, x) => s + x.duration, 0);
     const mins = Math.floor(totalTime / 60000);
     return { total, avgWpm, avgAcc, mins };
@@ -26,7 +26,7 @@ export default function StatsPage() {
       const d = new Date(s.startedAt).toISOString().slice(0, 10);
       const e = map.get(d) ?? { wpm: 0, acc: 0, count: 0 };
       e.wpm += s.wpm;
-      e.acc += s.backspaceCount;
+      e.acc += (s.totalKeystrokes > 0 ? s.backspaceCount / s.totalKeystrokes * 100 : 0);
       e.count++;
       map.set(d, e);
     }
@@ -65,7 +65,7 @@ export default function StatsPage() {
             </Card>
             <Card>
               <p className="text-2xl font-bold text-amber-600">{overview.avgAcc}%</p>
-              <p className="text-xs text-gray-500">平均退格数</p>
+              <p className="text-xs text-gray-500">退格率</p>
             </Card>
             <Card>
               <p className="text-2xl font-bold text-blue-600">{overview.mins}m</p>
@@ -103,7 +103,7 @@ export default function StatsPage() {
                   </div>
                   <div className="flex gap-4 text-xs text-gray-500">
                     <span>{s.wpm} WPM</span>
-                    <span>{s.backspaceCount}%</span>
+                    <span>{Math.round(s.totalKeystrokes > 0 ? s.backspaceCount / s.totalKeystrokes * 100 : 0)}%</span>
                     <span>{Math.round(s.duration / 1000)}s</span>
                   </div>
                 </div>
