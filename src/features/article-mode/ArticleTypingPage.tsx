@@ -29,11 +29,8 @@ export default function ArticleTypingPage() {
   const [errorIndices, setErrorIndices] = useState<Set<number>>(new Set());
   const [shiftDown, setShiftDown] = useState(false);
   const [capsOn, setCapsOn] = useState(false);
-
   const inputRef = useRef<HTMLInputElement>(null);
   const composingRef = useRef(false);
-  const showResultRef = useRef(false);
-  showResultRef.current = showResult;
 
   useEffect(() => { refresh(); }, [refresh]);
   const articles = materials.filter((m) => m.type === "article_en" || m.type === "article_zh");
@@ -59,10 +56,7 @@ export default function ArticleTypingPage() {
 
   const advance = useCallback(() => {
     const next = paraIdx + 1;
-    if (next >= paragraphs.length) {
-      const s = typing.getSession();
-      setSession(s); setShowResult(true); return;
-    }
+    if (next >= paragraphs.length) { const s = typing.getSession(); setSession(s); setShowResult(true); return; }
     setDoneChars((p) => p + paragraphs[paraIdx].length);
     setParaIdx(next);
     typing.init(paragraphs[next], selectedId, typing.materialName, "sequential");
@@ -79,34 +73,28 @@ export default function ArticleTypingPage() {
     setErrorIndices(inds);
   };
 
-  // input + composition events on the hidden input
   useEffect(() => {
-    const el = inputRef.current;
-    if (!el) return;
-
-    const onCompositionStart = () => { composingRef.current = true; };
-    const onCompositionEnd = (e: CompositionEvent) => {
+    const el = inputRef.current; if (!el) return;
+    const cs = () => { composingRef.current = true; };
+    const ce = (e: CompositionEvent) => {
       composingRef.current = false;
-      const text = e.data ?? "";
-      for (const ch of text) getTypingState().handleKey(ch);
+      for (const ch of (e.data ?? "")) getTypingState().handleKey(ch);
       el.value = "";
       updateErrors();
     };
-
-    el.addEventListener("compositionstart", onCompositionStart);
-    el.addEventListener("compositionend", onCompositionEnd);
+    el.addEventListener("compositionstart", cs);
+    el.addEventListener("compositionend", ce);
     setTimeout(() => el.focus(), 50);
-    return () => {
-      el.removeEventListener("compositionstart", onCompositionStart);
-      el.removeEventListener("compositionend", onCompositionEnd);
-    };
+    return () => { el.removeEventListener("compositionstart", cs); el.removeEventListener("compositionend", ce); };
   }, [paraIdx]);
 
-  // keydown: only for Enter + Shift/CapsLock
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Shift") { setShiftDown(true); return; }
       if (e.key === "CapsLock") { setCapsOn(e.getModifierState?.("CapsLock") ?? false); return; }
+      if (composingRef.current) return;
+      if (e.key === "Backspace") { e.preventDefault(); getTypingState().handleBackspace(); updateErrors(); return; }
+      if (e.key.length === 1) { e.preventDefault(); getTypingState().handleKey(e.key); updateErrors(); return; }
       if (e.key === "Enter") {
         const st = getTypingState();
         if (st.cursor >= st.target.length && st.target.length > 0) advance();
@@ -126,7 +114,6 @@ export default function ArticleTypingPage() {
     setTimeout(() => inputRef.current?.focus(), 100);
   };
   const handleBack = () => { typing.reset(); navigate("/"); };
-
   const cur = paragraphs[paraIdx] ?? "";
 
   return (
@@ -134,8 +121,7 @@ export default function ArticleTypingPage() {
       <input ref={inputRef} className="absolute opacity-0 w-0 h-0" autoComplete="off" />
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Article Typing</h1>
-        <select value={selectedId} onChange={(e) => handleSelect(e.target.value)}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800">
+        <select value={selectedId} onChange={(e) => handleSelect(e.target.value)} className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800">
           <option value="">Select...</option>
           {articles.map((m) => (<option key={m.id} value={m.id}>{m.name}</option>))}
         </select>
@@ -143,29 +129,17 @@ export default function ArticleTypingPage() {
       {!selectedId && (<div className="py-20 text-center text-gray-400">Select an article to start typing</div>)}
       {cur && (<>
         <StatsBar wpm={typing.wpm} accuracy={typing.accuracy} current={doneChars + typing.cursor} total={totalChars} />
-        <ArticleView paragraph={cur} translation={translations[paraIdx]} input={typing.input}
-          cursor={typing.cursor} errorIndices={errorIndices} paragraphIndex={paraIdx}
-          totalParagraphs={paragraphs.length} composing={false} />
+        <ArticleView paragraph={cur} translation={translations[paraIdx]} input={typing.input} cursor={typing.cursor} errorIndices={errorIndices} paragraphIndex={paraIdx} totalParagraphs={paragraphs.length} composing={false} />
         <div className="text-center text-xs text-gray-400">Enter to next paragraph</div>
-        <VirtualKeyboard nextKey={typing.nextKey} lastKeyResult={typing.lastKeyResult}
-          shiftKey={shiftDown} capsLock={capsOn} disabled={false} />
+        <VirtualKeyboard nextKey={typing.nextKey} lastKeyResult={typing.lastKeyResult} shiftKey={shiftDown} capsLock={capsOn} disabled={false} />
       </>)}
       {showResult && (
         <Modal open={showResult} onClose={handleBack} title="Result">
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="rounded-lg bg-indigo-50 p-3 dark:bg-indigo-950">
-                <p className="text-2xl font-bold text-indigo-600">{session?.wpm ?? 0}</p>
-                <p className="text-xs text-gray-500">WPM</p>
-              </div>
-              <div className="rounded-lg bg-green-50 p-3 dark:bg-green-950">
-                <p className="text-2xl font-bold text-green-600">{session?.accuracy ?? 100}%</p>
-                <p className="text-xs text-gray-500">Accuracy</p>
-              </div>
-              <div className="rounded-lg bg-amber-50 p-3 dark:bg-amber-950">
-                <p className="text-2xl font-bold text-amber-600">{totalChars}</p>
-                <p className="text-xs text-gray-500">Chars</p>
-              </div>
+              <div className="rounded-lg bg-indigo-50 p-3 dark:bg-indigo-950"><p className="text-2xl font-bold text-indigo-600">{session?.wpm ?? 0}</p><p className="text-xs text-gray-500">WPM</p></div>
+              <div className="rounded-lg bg-green-50 p-3 dark:bg-green-950"><p className="text-2xl font-bold text-green-600">{session?.accuracy ?? 100}%</p><p className="text-xs text-gray-500">Accuracy</p></div>
+              <div className="rounded-lg bg-amber-50 p-3 dark:bg-amber-950"><p className="text-2xl font-bold text-amber-600">{totalChars}</p><p className="text-xs text-gray-500">Chars</p></div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="ghost" onClick={handleBack}>Back</Button>
