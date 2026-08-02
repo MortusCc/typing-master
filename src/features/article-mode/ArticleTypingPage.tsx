@@ -132,7 +132,7 @@ export default function ArticleTypingPage() {
       <input
         ref={inputRef}
         onInput={handleInput}
-        className="fixed left-0 top-0 h-0 w-0 opacity-0"
+        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 font-mono text-lg opacity-30 focus:opacity-100 transition-opacity dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="off"
