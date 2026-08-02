@@ -172,12 +172,7 @@ useEffect(() => {
 
       {currentEntry && (
         <>
-          <StatsBar
-            wpm={typing.wpm}
-            accuracy={typing.accuracy}
-            current={currentIdx + (typing.state === "finished" ? 1 : 0)}
-            total={entries.length}
-          />
+          <StatsBar wpm={typing.wpm} accuracy={typing.accuracy} current={currentIdx + (typing.state === "finished" ? 1 : 0)} total={entries.length} backspaceCount={typing.backspaceCount} totalKeystrokes={typing.totalKeystrokes} />
 
           {feedback === "correct" && (
             <div className="rounded-lg bg-green-50 px-4 py-2 text-center text-green-700 dark:bg-green-950 dark:text-green-300">正确!</div>
