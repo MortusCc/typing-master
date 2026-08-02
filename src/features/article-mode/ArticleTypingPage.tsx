@@ -92,7 +92,7 @@ export default function ArticleTypingPage() {
 
   useEffect(() => {
     const cs = () => setComposing(true);
-    const ce = () => setComposing(false);
+    const ce = (e: CompositionEvent) => { setComposing(false); const text = e.data ?? ""; for (const ch of text) { typing.handleKey(ch); const ni = typing.input + ch; const inds = new Set<number>(); for (let i = 0; i < Math.min(ni.length, typing.target.length); i++) { if (ni[i] !== typing.target[i]) inds.add(i); } setErrorIndices(inds); } };
     document.addEventListener("compositionstart", cs);
     document.addEventListener("compositionend", ce);
     return () => { document.removeEventListener("compositionstart", cs); document.removeEventListener("compositionend", ce); };

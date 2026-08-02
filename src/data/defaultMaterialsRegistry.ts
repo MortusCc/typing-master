@@ -1,4 +1,4 @@
-﻿import type { Material } from "../types/material.ts";
+import type { Material } from "../types/material.ts";
 import { defaultEnglishSentences } from "./defaultEnglishSentences.ts";
 import { defaultChineseArticles } from "./defaultChineseArticles.ts";
 import { defaultEnglishFables } from "./defaultEnglishFables.ts";
@@ -14,6 +14,32 @@ export interface DefaultMaterialDef {
 }
 
 export const DEFAULT_MATERIALS: DefaultMaterialDef[] = [
+  {
+    id: "builtin-xlsx-wordlist-3",
+    name: "\u56DB+\u4E94\u4E0A\u8BCD\u6C47\u8868",
+    type: "wordlist",
+    buildMaterial: async () => {
+      const resp = await fetch(import.meta.env.BASE_URL + "default-materials/" + encodeURIComponent("\u56DB+\u4E94\u4E0A\u8BCD\u6C47\u8868.xlsx"));
+      if (!resp.ok) throw new Error("Failed to load xlsx: " + resp.status);
+      const buffer = await resp.arrayBuffer();
+      const { read, utils } = await import("xlsx");
+      const wb = read(buffer, { type: "array" });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows: unknown[][] = utils.sheet_to_json(sheet, { header: 1, defval: null, blankrows: false });
+      const entries: Material["entries"] = [];
+      let id = 0;
+      for (let i = 3; i < rows.length; i++) {
+        const row = rows[i];
+        const en = String(row[1] ?? "").trim();
+        const zh = String(row[4] ?? "").trim();
+        if (!en && !zh) continue;
+        if (/^(Unit\s*\d+|第\s*\d+\s*单元?|单元?\s*\d+)$/i.test(en)) continue;
+        id++;
+        entries.push({ id, english: en, chinese: zh, phonetic_uk: String(row[2] ?? "").trim() || undefined, phonetic_us: String(row[3] ?? "").trim() || undefined });
+      }
+      return { id: "builtin-xlsx-wordlist-3", name: "\u56DB+\u4E94\u4E0A\u8BCD\u6C47\u8868", type: "wordlist", source: "builtin", sourceFile: "default-materials/\u56DB+\u4E94\u4E0A\u8BCD\u6C47\u8868.xlsx", importedAt: Date.now(), entries, wordCount: entries.length };
+    },
+  },
   {
     id: "builtin-xlsx-wordlist-2",
     name: "小学英语四年级下",
