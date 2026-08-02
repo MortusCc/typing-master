@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+﻿import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { VirtualKeyboard } from "../../components/typing/VirtualKeyboard.tsx";
 import { StatsBar } from "../../components/typing/StatsBar.tsx";
@@ -29,8 +29,6 @@ export default function ArticleTypingPage() {
   const [errorIndices, setErrorIndices] = useState<Set<number>>(new Set());
   const [shiftDown, setShiftDown] = useState(false);
   const [capsOn, setCapsOn] = useState(false);
-
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { refresh(); }, [refresh]);
   const articles = materials.filter((m) => m.type === "article_en" || m.type === "article_zh");
@@ -65,39 +63,41 @@ export default function ArticleTypingPage() {
     setErrorIndices(new Set());
   }, [paraIdx, paragraphs, selectedId, typing]);
 
-  // Auto-focus hidden input when paragraph changes
-  useEffect(() => {
-    setTimeout(() => inputRef.current?.focus(), 50);
-  }, [paraIdx]);
-
-  // onInput: sync input value with typingStore in real-time
-  const handleInput = useCallback(() => {
-    const el = inputRef.current;
-    if (!el) return;
-    const val = el.value;
-    // Sync store to match input value
-    let st = getTypingState();
-    while (st.input.length < val.length) {
-      const ch = val[st.input.length];
-      st.handleKey(ch);
-      st = getTypingState();
-    }
-    while (st.input.length > val.length) {
-      st.handleBackspace();
-      st = getTypingState();
-    }
-    // Update error indices
+  const updateErrors = () => {
+    const st = getTypingState();
     const inds = new Set<number>();
     for (let i = 0; i < Math.min(st.input.length, st.target.length); i++) {
       if (st.input[i] !== st.target[i]) inds.add(i);
     }
     setErrorIndices(inds);
-  }, []);
+  };
 
-  // keydown only for Enter navigation + Shift tracking (no character interception)
+  // beforeinput: captures ALL text including IME, no keydown interception needed
+  useEffect(() => {
+    const handler = (e: InputEvent) => {
+      if (showResult) return;
+      if (e.inputType === "insertText" || e.inputType === "insertCompositionText" || e.inputType === "insertFromPaste") {
+        e.preventDefault();
+        const text = e.data ?? "";
+        for (const ch of text) getTypingState().handleKey(ch);
+        updateErrors();
+        return;
+      }
+      if (e.inputType === "deleteContentBackward" || e.inputType === "deleteContentForward" || e.inputType === "deleteByCut") {
+        e.preventDefault();
+        getTypingState().handleBackspace();
+        updateErrors();
+        return;
+      }
+      if (e.inputType?.startsWith("insert")) e.preventDefault();
+    };
+    document.addEventListener("beforeinput", handler);
+    return () => document.removeEventListener("beforeinput", handler);
+  }, [showResult]);
+
+  // keydown: only for Enter navigation + Shift/CapsLock tracking
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (showResult) return;
       if (e.key === "Shift") { setShiftDown(true); return; }
       if (e.key === "CapsLock") { setCapsOn(e.getModifierState?.("CapsLock") ?? false); return; }
       if (e.key === "Enter") {
@@ -123,55 +123,44 @@ export default function ArticleTypingPage() {
 
   return (
     <div className="space-y-4">
-      {/* Hidden input that captures ALL text including IME */}
-      <input
-        ref={inputRef}
-        onInput={handleInput}
-        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 font-mono text-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-        autoComplete="off"
-        autoCorrect="off"
-        autoCapitalize="off"
-        spellCheck={false}
-      />
-
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">文章打字</h1>
+        <h1 className="text-xl font-bold">Article Typing</h1>
         <select value={selectedId} onChange={(e) => handleSelect(e.target.value)}
           className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800">
-          <option value="">选择...</option>
+          <option value="">Select...</option>
           {articles.map((m) => (<option key={m.id} value={m.id}>{m.name}</option>))}
         </select>
       </div>
-      {!selectedId && (<div className="py-20 text-center text-gray-400">选择一篇文章开始练习</div>)}
+      {!selectedId && (<div className="py-20 text-center text-gray-400">Select an article to start typing</div>)}
       {cur && (<>
         <StatsBar wpm={typing.wpm} accuracy={typing.accuracy} current={doneChars + typing.cursor} total={totalChars} />
         <ArticleView paragraph={cur} translation={translations[paraIdx]} input={typing.input}
           cursor={typing.cursor} errorIndices={errorIndices} paragraphIndex={paraIdx}
           totalParagraphs={paragraphs.length} composing={false} />
-        <div className="text-center text-xs text-gray-400">按 Enter 进入下一段</div>
+        <div className="text-center text-xs text-gray-400">Enter to next paragraph</div>
         <VirtualKeyboard nextKey={typing.nextKey} lastKeyResult={typing.lastKeyResult}
           shiftKey={shiftDown} capsLock={capsOn} disabled={false} />
       </>)}
       {showResult && (
-        <Modal open={showResult} onClose={handleBack} title="成绩单">
+        <Modal open={showResult} onClose={handleBack} title="Result">
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-3 text-center">
               <div className="rounded-lg bg-indigo-50 p-3 dark:bg-indigo-950">
                 <p className="text-2xl font-bold text-indigo-600">{session?.wpm ?? 0}</p>
-                <p className="text-xs text-gray-500">速度</p>
+                <p className="text-xs text-gray-500">WPM</p>
               </div>
               <div className="rounded-lg bg-green-50 p-3 dark:bg-green-950">
                 <p className="text-2xl font-bold text-green-600">{session?.accuracy ?? 100}%</p>
-                <p className="text-xs text-gray-500">正确率</p>
+                <p className="text-xs text-gray-500">Accuracy</p>
               </div>
               <div className="rounded-lg bg-amber-50 p-3 dark:bg-amber-950">
                 <p className="text-2xl font-bold text-amber-600">{totalChars}</p>
-                <p className="text-xs text-gray-500">字符数</p>
+                <p className="text-xs text-gray-500">Chars</p>
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="ghost" onClick={handleBack}>返回</Button>
-              <Button onClick={handleRestart}>再来一次</Button>
+              <Button variant="ghost" onClick={handleBack}>Back</Button>
+              <Button onClick={handleRestart}>Again</Button>
             </div>
           </div>
         </Modal>
