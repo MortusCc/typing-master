@@ -147,7 +147,7 @@ export default function ArticleTypingPage() {
       )}
 
       {cur && (<>
-        <StatsBar wpm={typing.wpm} accuracy={typing.accuracy} current={doneChars + typing.cursor} total={totalChars} />
+        <StatsBar wpm={typing.wpm} accuracy={typing.accuracy} current={doneChars + typing.cursor} total={totalChars} backspaceCount={typing.backspaceCount} totalKeystrokes={typing.totalKeystrokes} />
         <ArticleView paragraph={cur} translation={translations[paraIdx]} input={typing.input} cursor={typing.cursor} errorIndices={errorIndices} paragraphIndex={paraIdx} totalParagraphs={paragraphs.length} composing={false} />
         <div className="text-center text-xs text-gray-400">按 Enter 进入下一段</div>
         <VirtualKeyboard nextKey={typing.nextKey} lastKeyResult={typing.lastKeyResult} shiftKey={shiftDown} capsLock={capsOn} disabled={false} />
