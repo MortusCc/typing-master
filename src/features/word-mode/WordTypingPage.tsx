@@ -29,19 +29,18 @@ export default function WordTypingPage() {
   const [errorIndices, setErrorIndices] = useState<Set<number>>(new Set());
   const [showRestore, setShowRestore] = useState(false);
   const [restoreData, setRestoreData] = useState<any>(null);
+  const [showPlanPicker, setShowPlanPicker] = useState(false);
+  const [planSize, setPlanSize] = useState<number | null>(null);
+  const [planStartIdx, setPlanStartIdx] = useState(0);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { refresh(); }, [refresh]);
-
   const wordlists = materials.filter((m) => m.type === "wordlist");
 
   // Check for saved progress on mount
   useEffect(() => {
     const saved = typing.restoreProgress("word");
-    if (saved && saved.materialId) {
-      setRestoreData(saved);
-      setShowRestore(true);
-    }
+    if (saved && saved.materialId) { setRestoreData(saved); setShowRestore(true); }
   }, []);
 
   const doRestore = useCallback(async () => {
@@ -53,19 +52,16 @@ export default function WordTypingPage() {
       setCurrentIdx(restoreData.currentIdx);
       setErrorWords(restoreData.errorWords || []);
       setShowRestore(false);
+      if (restoreData.planSize) setPlanSize(restoreData.planSize);
+      if (restoreData.planStartIdx != null) setPlanStartIdx(restoreData.planStartIdx);
       const cur = mat.entries[restoreData.currentIdx];
       if (cur) typing.init(cur.english, restoreData.materialId, mat.name, "sequential");
-      // Restore accumulated stats
       typing.restoreStats(restoreData);
     }
   }, [restoreData, typing]);
 
-  const dismissRestore = () => {
-    typing.clearProgress("word");
-    setShowRestore(false);
-  };
+  const dismissRestore = () => { typing.clearProgress("word"); setShowRestore(false); };
 
-  // Auto-select material from URL parameter
   useEffect(() => {
     const materialId = searchParams.get("material");
     if (materialId && materialId !== selectedId) handleSelectMaterial(materialId);
@@ -76,33 +72,54 @@ export default function WordTypingPage() {
     const mat: Material | undefined = await getMaterialById(id);
     if (mat?.entries?.length) {
       setEntries(mat.entries);
-      setCurrentIdx(0);
-      setErrorWords([]);
-      setShowResult(false);
-      setSession(null);
-      setFeedback(null);
-      const first = mat.entries[0];
-      typing.init(first.english, id, mat.name, "sequential");
-      // Save initial progress
-      typing.saveProgress("word", { materialId: id, materialName: mat.name, currentIdx: 0, errorWords: [] });
+      setCurrentIdx(0); setErrorWords([]); setShowResult(false); setSession(null); setFeedback(null);
+      const savedPlan = localStorage.getItem("typing_plan_" + id);
+      if (savedPlan) {
+        try {
+          const plan = JSON.parse(savedPlan);
+          if (plan.planSize) setPlanSize(plan.planSize);
+          const startIdx = plan.currentStartIdx || 0;
+          setPlanStartIdx(startIdx);
+          if (startIdx < mat.entries.length) {
+            setCurrentIdx(startIdx);
+            typing.init(mat.entries[startIdx].english, id, mat.name, "sequential");
+            typing.saveProgress("word", { materialId: id, materialName: mat.name, currentIdx: startIdx, errorWords: [] });
+            return;
+          }
+        } catch { /* ignore */ }
+      }
+      setShowPlanPicker(true);
     }
   }, [typing]);
 
+  const startPlan = useCallback((n: number | null) => {
+    const start = 0;
+    setPlanSize(n); setPlanStartIdx(start); setCurrentIdx(start); setShowPlanPicker(false);
+    localStorage.setItem("typing_plan_" + selectedId, JSON.stringify({ planSize: n, currentStartIdx: start }));
+    typing.init(entries[start].english, selectedId, typing.materialName, "sequential");
+    typing.saveProgress("word", { materialId: selectedId, materialName: typing.materialName, currentIdx: start, errorWords: [] });
+  }, [selectedId, entries, typing]);
+
   const advance = useCallback(() => {
     const nextIdx = currentIdx + 1;
-    if (nextIdx >= entries.length) {
+    const effectiveEnd = planSize != null ? Math.min(planStartIdx + planSize, entries.length) : entries.length;
+    if (nextIdx >= effectiveEnd) {
       const s = typing.getSession();
-      setSession(s);
-      setShowResult(true);
+      setSession(s); setShowResult(true);
+      if (planSize != null && planStartIdx + planSize < entries.length) {
+        const newStart = planStartIdx + planSize;
+        localStorage.setItem("typing_plan_" + selectedId, JSON.stringify({ planSize, currentStartIdx: newStart }));
+      } else {
+        localStorage.removeItem("typing_plan_" + selectedId);
+      }
       typing.clearProgress("word");
       return;
     }
     setCurrentIdx(nextIdx);
     typing.init(entries[nextIdx].english, selectedId, typing.materialName, "sequential");
     setErrorIndices(new Set());
-    // Save progress after advancing
-    typing.saveProgress("word", { materialId: selectedId, materialName: typing.materialName, currentIdx: nextIdx, errorWords });
-  }, [currentIdx, entries, selectedId, typing, errorWords]);
+    typing.saveProgress("word", { materialId: selectedId, materialName: typing.materialName, currentIdx: nextIdx, errorWords, planSize, planStartIdx });
+  }, [currentIdx, entries, selectedId, typing, errorWords, planSize, planStartIdx]);
 
   const submitWord = useCallback(() => {
     if (typing.state !== "running") return;
@@ -115,8 +132,7 @@ export default function WordTypingPage() {
       const target = typing.target;
       setErrorWords((prev) => [...prev, { english: target, chinese: entries[currentIdx]?.chinese ?? "" }]);
       feedbackTimer.current = setTimeout(() => {
-        setFeedback(null);
-        setErrorIndices(new Set());
+        setFeedback(null); setErrorIndices(new Set());
         typing.init(target, selectedId, typing.materialName, "sequential");
       }, 1500);
     }
@@ -128,7 +144,16 @@ export default function WordTypingPage() {
       if (e.isComposing || e.key === "Dead") return;
       if (e.key === "Enter") { e.preventDefault(); submitWord(); return; }
       if (e.key === "Backspace") { e.preventDefault(); typing.handleBackspace(); return; }
-      if (e.key.length === 1) { e.preventDefault(); typing.handleKey(e.key); const ni = typing.input; const inds = new Set<number>(); for (let i = 0; i < Math.min(ni.length, typing.target.length); i++) { if (ni[i] !== typing.target[i]) inds.add(i); } setErrorIndices(inds); }
+      if (e.key.length === 1) {
+        e.preventDefault();
+        const newInput = typing.input + e.key;
+        typing.handleKey(e.key);
+        const inds = new Set<number>();
+        for (let i = 0; i < Math.min(newInput.length, typing.target.length); i++) {
+          if (newInput[i] !== typing.target[i]) inds.add(i);
+        }
+        setErrorIndices(inds);
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -138,28 +163,29 @@ export default function WordTypingPage() {
 
   const handleRestart = () => {
     if (!entries.length) return;
-    setCurrentIdx(0); setErrorWords([]); setShowResult(false); setSession(null); setFeedback(null);
-    typing.init(entries[0].english, selectedId, typing.materialName, "sequential");
+    setCurrentIdx(planStartIdx); setErrorWords([]); setShowResult(false); setSession(null); setFeedback(null);
+    typing.init(entries[planStartIdx].english, selectedId, typing.materialName, "sequential");
   };
-
-  const handleBack = () => {
-    if (session) stats.recordSession(session);
-    typing.reset();
-    navigate("/");
-  };
-
+  const handleBack = () => { if (session) stats.recordSession(session); typing.reset(); navigate("/"); };
   const currentEntry = entries[currentIdx];
 
   return (
     <div className="space-y-4">
       {showRestore && restoreData && (
         <div className="rounded-lg border-2 border-indigo-300 bg-indigo-50 p-4 dark:border-indigo-700 dark:bg-indigo-950">
-          <p className="text-sm font-medium text-indigo-800 dark:text-indigo-200">
-            发现未完成的进度: {restoreData.materialName} (第 {restoreData.currentIdx + 1} 个词)
-          </p>
-          <div className="mt-2 flex gap-2">
-            <Button size="sm" onClick={doRestore}>恢复</Button>
-            <Button size="sm" variant="ghost" onClick={dismissRestore}>放弃</Button>
+          <p className="text-sm font-medium text-indigo-800 dark:text-indigo-200">发现未完成的进度: {restoreData.materialName} (第 {restoreData.currentIdx + 1} 个词)</p>
+          <div className="mt-2 flex gap-2"><Button size="sm" onClick={doRestore}>恢复</Button><Button size="sm" variant="ghost" onClick={dismissRestore}>放弃</Button></div>
+        </div>
+      )}
+
+      {showPlanPicker && selectedId && (
+        <div className="rounded-xl border-2 border-indigo-300 bg-indigo-50 p-6 text-center dark:border-indigo-950 dark:bg-indigo-900">
+          <p className="text-lg font-semibold text-indigo-800 dark:text-indigo-200 mb-3">选择每次练习的词数</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {([20, 30, 50, 100] as const).map((n) => (
+              <Button key={n} size="lg" onClick={() => startPlan(n)} className="w-20 h-14 text-lg">{n}</Button>
+            ))}
+            <Button size="lg" onClick={() => startPlan(null)} className="w-20 h-14 text-lg">全部</Button>
           </div>
         </div>
       )}
@@ -181,9 +207,9 @@ export default function WordTypingPage() {
         </div>
       )}
 
-      {currentEntry && (
+      {currentEntry && !showPlanPicker && (
         <>
-          <StatsBar wpm={typing.wpm} current={currentIdx + (typing.state === "finished" ? 1 : 0)} total={entries.length} backspaceCount={typing.backspaceCount} totalKeystrokes={typing.totalKeystrokes} />
+          <StatsBar wpm={typing.wpm} current={currentIdx + (typing.state === "finished" ? 1 : 0)} total={planSize != null ? Math.min(planStartIdx + planSize, entries.length) : entries.length} backspaceCount={typing.backspaceCount} totalKeystrokes={typing.totalKeystrokes} />
           {feedback === "correct" && (<div className="rounded-lg bg-green-50 px-4 py-2 text-center text-green-700 dark:bg-green-950 dark:text-green-300">正确!</div>)}
           {feedback === "error" && (<div className="rounded-lg bg-red-50 px-4 py-2 text-center text-red-700 dark:bg-red-950 dark:text-red-300">错误! 正确答案: <span className="font-mono font-bold">{typing.target}</span></div>)}
           <WordCard chinese={currentEntry.chinese} phonetic={currentEntry.phonetic_uk ?? currentEntry.phonetic_us} target={typing.target} input={typing.input} cursor={typing.cursor} errorIndices={errorIndices} />
