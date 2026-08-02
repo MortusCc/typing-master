@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { VirtualKeyboard } from "../../components/typing/VirtualKeyboard.tsx";
 import { StatsBar } from "../../components/typing/StatsBar.tsx";
@@ -27,6 +27,7 @@ export default function ArticleTypingPage() {
   const [showResult, setShowResult] = useState(false);
   const [session, setSession] = useState<TypingSession | null>(null);
   const [composing, setComposing] = useState(false);
+  const composingRef = useRef(false);
   const [errorIndices, setErrorIndices] = useState<Set<number>>(new Set());
   const [shiftDown, setShiftDown] = useState(false);
   const [capsOn, setCapsOn] = useState(false);
@@ -69,7 +70,7 @@ export default function ArticleTypingPage() {
       if (showResult) return;
       if (e.key === "Shift") { setShiftDown(true); return; }
       if (e.key === "CapsLock") { setCapsOn(e.getModifierState?.("CapsLock") ?? false); return; }
-      if (e.key === "Dead" || e.key === "Process") return;
+      if (composingRef.current) return; // let IME handle all keys
       if (e.key === "Backspace") { e.preventDefault(); typing.handleBackspace(); return; }
       if (e.key === "Enter") {
         e.preventDefault();
@@ -93,7 +94,7 @@ export default function ArticleTypingPage() {
   }, [typing, showResult, advance]);
 
   useEffect(() => {
-    const cs = () => setComposing(true);
+    const cs = () => { setComposing(true); composingRef.current = true; };
     const ce = (e: CompositionEvent) => {
       setComposing(false);
       const text = e.data ?? "";
