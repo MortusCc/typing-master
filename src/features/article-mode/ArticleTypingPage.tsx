@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useCallback } from "react";
+﻿import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { VirtualKeyboard } from "../../components/typing/VirtualKeyboard.tsx";
 import { StatsBar } from "../../components/typing/StatsBar.tsx";
@@ -30,6 +30,10 @@ export default function ArticleTypingPage() {
   const [shiftDown, setShiftDown] = useState(false);
   const [capsOn, setCapsOn] = useState(false);
 
+  const inputRef = useRef<HTMLInputElement>(null);
+  const showResultRef = useRef(false);
+  showResultRef.current = showResult;
+
   useEffect(() => { refresh(); }, [refresh]);
   const articles = materials.filter((m) => m.type === "article_en" || m.type === "article_zh");
 
@@ -49,6 +53,7 @@ export default function ArticleTypingPage() {
     setTotalChars(total); setDoneChars(0);
     setShowResult(false); setSession(null);
     if (paras.length > 0) typing.init(paras[0], id, mat.name, "sequential");
+    setTimeout(() => inputRef.current?.focus(), 100);
   }, [typing]);
 
   const advance = useCallback(() => {
@@ -61,6 +66,7 @@ export default function ArticleTypingPage() {
     setParaIdx(next);
     typing.init(paragraphs[next], selectedId, typing.materialName, "sequential");
     setErrorIndices(new Set());
+    setTimeout(() => inputRef.current?.focus(), 100);
   }, [paraIdx, paragraphs, selectedId, typing]);
 
   const updateErrors = () => {
@@ -72,14 +78,18 @@ export default function ArticleTypingPage() {
     setErrorIndices(inds);
   };
 
-  // beforeinput: captures ALL text including IME, no keydown interception needed
+  // Native beforeinput on input element (bypasses React synthetic events)
   useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
     const handler = (e: InputEvent) => {
-      if (showResult) return;
+      if (showResultRef.current) return;
       if (e.inputType === "insertText" || e.inputType === "insertCompositionText" || e.inputType === "insertFromPaste") {
         e.preventDefault();
         const text = e.data ?? "";
         for (const ch of text) getTypingState().handleKey(ch);
+        // Reset input value to keep it empty
+        el.value = "";
         updateErrors();
         return;
       }
@@ -91,9 +101,9 @@ export default function ArticleTypingPage() {
       }
       if (e.inputType?.startsWith("insert")) e.preventDefault();
     };
-    document.addEventListener("beforeinput", handler);
-    return () => document.removeEventListener("beforeinput", handler);
-  }, [showResult]);
+    el.addEventListener("beforeinput", handler);
+    return () => el.removeEventListener("beforeinput", handler);
+  }, [paraIdx]);
 
   // keydown: only for Enter navigation + Shift/CapsLock tracking
   useEffect(() => {
@@ -116,6 +126,7 @@ export default function ArticleTypingPage() {
     if (!paragraphs.length) return;
     setParaIdx(0); setDoneChars(0); setShowResult(false); setSession(null);
     typing.init(paragraphs[0], selectedId, typing.materialName, "sequential");
+    setTimeout(() => inputRef.current?.focus(), 100);
   };
   const handleBack = () => { typing.reset(); navigate("/"); };
 
@@ -123,29 +134,13 @@ export default function ArticleTypingPage() {
 
   return (
     <div className="space-y-4">
-      <div
-        contentEditable
-        suppressContentEditableWarning
-        ref={(el) => { if (el && document.activeElement !== el) el.focus(); }}
-        onBeforeInput={(e) => {
-          if (showResult) return;
-          const ev = e.nativeEvent as InputEvent;
-          if (ev.inputType === "insertText" || ev.inputType === "insertCompositionText" || ev.inputType === "insertFromPaste") {
-            e.preventDefault();
-            const text = ev.data ?? "";
-            for (const ch of text) getTypingState().handleKey(ch);
-            updateErrors();
-            return;
-          }
-          if (ev.inputType === "deleteContentBackward" || ev.inputType === "deleteContentForward" || ev.inputType === "deleteByCut") {
-            e.preventDefault();
-            getTypingState().handleBackspace();
-            updateErrors();
-            return;
-          }
-          if (ev.inputType?.startsWith("insert")) e.preventDefault();
-        }}
-        className="h-0 w-0 overflow-hidden opacity-0"
+      <input
+        ref={inputRef}
+        className="fixed left-0 top-0 h-0 w-0 opacity-0"
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
       />
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Article Typing</h1>
