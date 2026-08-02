@@ -152,7 +152,7 @@ export const useTypingStore = create<TypingStore>((set, get) => ({
     localStorage.removeItem("typing_master_word_progress");
   },
   getSession: () => {
-    const { materialId, materialName, mode, startTime, target, cursor, wpm, accuracy, errorCount, state } = get();
+    const { materialId, materialName, mode, startTime, target, cursor, wpm, accuracy, errorCount, state, backspaceCount, totalKeystrokes } = get();
     if (!materialId || !startTime) return null;
 
     return {
@@ -167,6 +167,8 @@ export const useTypingStore = create<TypingStore>((set, get) => ({
       errorChars: errorCount,
       wpm,
       accuracy,
+      backspaceCount,
+      totalKeystrokes,
       duration: startTime ? Date.now() - startTime : 0,
       errorDetails: [],
     };

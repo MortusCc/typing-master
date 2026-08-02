@@ -26,6 +26,8 @@ export interface TypingSession {
   errorChars: number;
   wpm: number;
   accuracy: number;
+  backspaceCount: number;
+  totalKeystrokes: number;
   duration: number;
   errorDetails: ErrorDetail[];
 }

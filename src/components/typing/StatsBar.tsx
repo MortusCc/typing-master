@@ -20,9 +20,6 @@ export function StatsBar({ wpm, current, total, backspaceCount, totalKeystrokes 
         <span>{pct}%</span>
         <span>{wpm} WPM</span>
         <span>退格 {backspaceCount ?? 0}/{totalKeystrokes ?? 0}</span>
-        {backspaceCount != null && totalKeystrokes != null && (
-          <span>退格 {backspaceCount}/{totalKeystrokes}</span>
-        )}
       </div>
     </div>
   );
