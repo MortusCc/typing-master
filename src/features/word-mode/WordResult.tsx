@@ -23,7 +23,7 @@ export function WordResult({ open, session, errorWords, onRestart, onBack }: Wor
         <div className="grid grid-cols-3 gap-3 text-center">
           <div className="rounded-lg bg-indigo-50 p-3 dark:bg-indigo-950">
             <p className="text-2xl font-bold text-indigo-600">{session.wpm}</p>
-            <p className="text-xs text-gray-500">速度</p>
+            <p className="text-xs text-gray-500">WPM</p>
           </div>
           <div className="rounded-lg bg-green-50 p-3 dark:bg-green-950">
             <p className="text-2xl font-bold text-green-600">{session.accuracy}%</p>
