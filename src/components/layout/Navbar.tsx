@@ -5,6 +5,7 @@ const navItems = [
   { to: "/", label: "首页" },
   { to: "/word", label: "单词" },
   { to: "/article", label: "文章" },
+  { to: "/materials", label: "素材" },
   { to: "/stats", label: "统计" },
   { to: "/settings", label: "设置" },
 ];
