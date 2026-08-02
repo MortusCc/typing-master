@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { VirtualKeyboard } from "../../components/typing/VirtualKeyboard.tsx";
 import { StatsBar } from "../../components/typing/StatsBar.tsx";
@@ -84,38 +84,19 @@ export default function ArticleTypingPage() {
     const el = inputRef.current;
     if (!el) return;
 
-    let lastVal = "";
-
-    const onInput = () => {
-      if (composingRef.current) return; // skip IME intermediate
-      const val = el.value;
-      if (val.length > lastVal.length) {
-        const added = val.slice(lastVal.length);
-        for (const ch of added) getTypingState().handleKey(ch);
-      } else if (val.length < lastVal.length) {
-        for (let i = 0; i < lastVal.length - val.length; i++) getTypingState().handleBackspace();
-      }
-      lastVal = val;
-      el.value = "";
-      updateErrors();
-    };
-
-    const onCompositionStart = () => { composingRef.current = true; lastVal = el.value; };
+    const onCompositionStart = () => { composingRef.current = true; };
     const onCompositionEnd = (e: CompositionEvent) => {
       composingRef.current = false;
       const text = e.data ?? "";
       for (const ch of text) getTypingState().handleKey(ch);
       el.value = "";
-      lastVal = "";
       updateErrors();
     };
 
-    el.addEventListener("input", onInput);
     el.addEventListener("compositionstart", onCompositionStart);
     el.addEventListener("compositionend", onCompositionEnd);
     setTimeout(() => el.focus(), 50);
     return () => {
-      el.removeEventListener("input", onInput);
       el.removeEventListener("compositionstart", onCompositionStart);
       el.removeEventListener("compositionend", onCompositionEnd);
     };
