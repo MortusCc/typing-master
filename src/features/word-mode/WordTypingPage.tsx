@@ -100,7 +100,7 @@ export default function WordTypingPage() {
     const handler = (e: KeyboardEvent) => {
       if (showResult) return;
       if (e.isComposing || e.key === "Dead") return;
-      if (e.key === "Enter" || e.key === " ") {
+      if (e.key === "Enter") {
         e.preventDefault();
         submitWord();
         return;

@@ -17,6 +17,7 @@ interface TypingStore {
   lastKeyResult: "correct" | "error" | null;
   errorCount: number;
   totalKeystrokes: number;
+  backspaceCount: number;
 
   init: (target: string, materialId: string, materialName: string, mode: PracticeMode) => void;
   handleKey: (key: string) => KeyResult;
@@ -40,6 +41,7 @@ export const useTypingStore = create<TypingStore>((set, get) => ({
   lastKeyResult: null,
   errorCount: 0,
   totalKeystrokes: 0,
+  backspaceCount: 0,
 
   init: (target, materialId, materialName, mode) => {
     set({

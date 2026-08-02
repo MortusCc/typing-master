@@ -1,13 +1,15 @@
-﻿import { Progress } from "../ui/Progress.tsx";
+import { Progress } from "../ui/Progress.tsx";
 
 interface StatsBarProps {
   wpm: number;
   accuracy: number;
   current: number;
   total: number;
+  backspaceCount?: number;
+  totalKeystrokes?: number;
 }
 
-export function StatsBar({ wpm, accuracy, current, total }: StatsBarProps) {
+export function StatsBar({ wpm, accuracy, current, total, backspaceCount, totalKeystrokes }: StatsBarProps) {
   const pct = total > 0 ? Math.round((current / total) * 100) : 0;
 
   return (
@@ -18,6 +20,9 @@ export function StatsBar({ wpm, accuracy, current, total }: StatsBarProps) {
         <span>{pct}%</span>
         <span>{wpm} WPM</span>
         <span>{accuracy}%</span>
+        {backspaceCount != null && totalKeystrokes != null && totalKeystrokes > 0 && (
+          <span>退格 {backspaceCount}/{totalKeystrokes}</span>
+        )}
       </div>
     </div>
   );

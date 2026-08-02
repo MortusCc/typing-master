@@ -32,6 +32,8 @@ export default function ArticleTypingPage() {
   const [capsOn, setCapsOn] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const composingRef = useRef(false);
+  const errorIndicesRef = useRef<Set<number>>(new Set());
+  useEffect(() => { errorIndicesRef.current = errorIndices; }, [errorIndices]);
 
   useEffect(() => { refresh(); }, [refresh]);
   const articles = materials.filter((m) => m.type === "article_en" || m.type === "article_zh");
@@ -104,7 +106,7 @@ export default function ArticleTypingPage() {
       if (e.key.length === 1) { e.preventDefault(); getTypingState().handleKey(e.key); updateErrors(); return; }
       if (e.key === "Enter") {
         const st = getTypingState();
-        if (st.cursor >= st.target.length && st.target.length > 0) advance();
+        if (st.cursor >= st.target.length && st.target.length > 0 && errorIndicesRef.current.size === 0) advance();
         return;
       }
     };
