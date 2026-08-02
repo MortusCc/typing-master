@@ -24,6 +24,10 @@ interface TypingStore {
   handleBackspace: () => void;
   reset: () => void;
   getSession: () => TypingSession | null;
+  saveProgress: (mode: string, data: Record<string, unknown>) => void;
+  restoreProgress: (mode: string) => Record<string, unknown> | null;
+  clearProgress: (mode: string) => void;
+  restoreStats: (data: Record<string, unknown>) => void;
 }
 
 export const useTypingStore = create<TypingStore>((set, get) => ({
@@ -136,20 +140,30 @@ export const useTypingStore = create<TypingStore>((set, get) => ({
     });
   },
 
-  saveWordProgress: (currentIdx: number, errorWords: { english: string; chinese: string }[]) => {
-    const { materialId, materialName, startTime, totalKeystrokes, backspaceCount } = get();
-    localStorage.setItem("typing_master_word_progress", JSON.stringify({
-      materialId, materialName, currentIdx, errorWords, startTime, totalKeystrokes, backspaceCount,
-      savedAt: Date.now(),
-    }));
+  saveProgress: (mode: string, data: Record<string, unknown>) => {
+    const stats = get().getStats();
+    const key = "typing_master_progress_" + mode;
+    localStorage.setItem(key, JSON.stringify({ ...data, ...stats, savedAt: Date.now() }));
   },
-  restoreWordProgress: () => {
-    const r = localStorage.getItem("typing_master_word_progress");
+  restoreProgress: (mode: string) => {
+    const key = "typing_master_progress_" + mode;
+    const r = localStorage.getItem(key);
     if (!r) return null;
     try { return JSON.parse(r); } catch { return null; }
   },
-  clearWordProgress: () => {
-    localStorage.removeItem("typing_master_word_progress");
+  clearProgress: (mode: string) => {
+    localStorage.removeItem("typing_master_progress_" + mode);
+  },
+  restoreStats: (data: Record<string, unknown>) => {
+    const updates: Partial<TypingStore> = {};
+    if (data.backspaceCount != null) updates.backspaceCount = data.backspaceCount as number;
+    if (data.totalKeystrokes != null) updates.totalKeystrokes = data.totalKeystrokes as number;
+    if (data.startTime != null) updates.startTime = data.startTime as number;
+    if (Object.keys(updates).length > 0) set(updates);
+  },
+  getStats: () => {
+    const { backspaceCount, totalKeystrokes, startTime } = get();
+    return { backspaceCount, totalKeystrokes, startTime };
   },
   getSession: () => {
     const { materialId, materialName, mode, startTime, target, cursor, wpm, accuracy, errorCount, state, backspaceCount, totalKeystrokes } = get();

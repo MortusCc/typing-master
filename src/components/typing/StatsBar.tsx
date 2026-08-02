@@ -2,7 +2,7 @@ import { Progress } from "../ui/Progress.tsx";
 
 interface StatsBarProps {
   wpm: number;
-  accuracy: number;
+  accuracy?: number;
   current: number;
   total: number;
   backspaceCount?: number;
