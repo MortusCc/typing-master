@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { VirtualKeyboard } from "../../components/typing/VirtualKeyboard.tsx";
 import { StatsBar } from "../../components/typing/StatsBar.tsx";
+import { MaterialPicker } from "../../components/typing/MaterialPicker.tsx";
 import { WordCard } from "./WordCard.tsx";
 import { WordResult } from "./WordResult.tsx";
 import { useMaterialStore } from "../../stores/materialStore.ts";
@@ -142,7 +143,7 @@ export default function WordTypingPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">单词打字</h1>
+        <h1 className="text-xl font-bold">单词打字</h1>`r`n        <MaterialPicker filterType="wordlist" onSelect={handleSelectMaterial} />
         <select
           value={selectedId}
           onChange={(e) => handleSelectMaterial(e.target.value)}

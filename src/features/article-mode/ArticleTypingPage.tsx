@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { VirtualKeyboard } from "../../components/typing/VirtualKeyboard.tsx";
 import { StatsBar } from "../../components/typing/StatsBar.tsx";
+import { MaterialPicker } from "../../components/typing/MaterialPicker.tsx";
 import { ArticleView } from "./ArticleView.tsx";
 import { Modal } from "../../components/ui/Modal.tsx";
 import { Button } from "../../components/ui/Button.tsx";
@@ -120,7 +121,7 @@ export default function ArticleTypingPage() {
     <div className="space-y-4">
       <input ref={inputRef} className="absolute opacity-0 w-0 h-0" autoComplete="off" />
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Article Typing</h1>
+        <h1 className="text-xl font-bold">Article Typing</h1>`r`n        <MaterialPicker filterType="article" onSelect={handleSelect} />
         <select value={selectedId} onChange={(e) => handleSelect(e.target.value)} className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800">
           <option value="">Select...</option>
           {articles.map((m) => (<option key={m.id} value={m.id}>{m.name}</option>))}
