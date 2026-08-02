@@ -80,23 +80,19 @@ export default function WordTypingPage() {
       }, 600);
     } else {
       setFeedback("error");
-      const idx = new Set<number>();
-      for (let i = 0; i < Math.min(typing.input.length, typing.target.length); i++) {
-        if (typing.input[i] !== typing.target[i]) idx.add(i);
-      }
-      setErrorIndices(idx);
+      const target = typing.target;
       setErrorWords((prev) => [
         ...prev,
-        { english: typing.target, chinese: entries[currentIdx]?.chinese ?? "" },
+        { english: target, chinese: entries[currentIdx]?.chinese ?? "" },
       ]);
       feedbackTimer.current = setTimeout(() => {
         setFeedback(null);
-        advance();
+        setErrorIndices(new Set());
+        typing.init(target, selectedId, typing.materialName, "sequential");
       }, 1500);
     }
-  }, [typing, advance, entries, currentIdx]);
-
-  useEffect(() => {
+  }, [typing, advance, entries, currentIdx, selectedId]);
+useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (showResult) return;
       if (e.isComposing || e.key === "Dead") return;
