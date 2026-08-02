@@ -25,6 +25,7 @@ export function XlsxImporter({ onComplete, onCancel }: XlsxImporterProps) {
   const [entries, setEntries] = useState<WordEntry[]>([]);
   const [error, setError] = useState("");
   const [startRow, setStartRow] = useState(2);
+  const [endRow, setEndRow] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,6 +73,7 @@ export function XlsxImporter({ onComplete, onCancel }: XlsxImporterProps) {
         chineseCol,
         phoneticUkCol >= 0 ? phoneticUkCol : undefined,
         phoneticUsCol >= 0 ? phoneticUsCol : undefined,
+        endRow > 0 ? endRow : undefined,
       );
       setEntries(extracted);
       setStep("confirm");
@@ -146,14 +148,9 @@ export function XlsxImporter({ onComplete, onCancel }: XlsxImporterProps) {
             <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">
               列映射
             </h3>
-            <div className="space-y-3">
-              <Input
-                label={`起始行（跳过前 ${startRow} 行）`}
-                type="number"
-                min={0}
-                value={startRow}
-                onChange={(e) => setStartRow(Number(e.target.value))}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Input label={`起始行（${startRow}）`} type="number" min={0} value={startRow} onChange={(e) => setStartRow(Number(e.target.value))} />
+              <Input label={`结束行（${endRow > 0 ? endRow : '不限'}）`} type="number" min={0} placeholder="0=全部" value={endRow} onChange={(e) => setEndRow(Number(e.target.value))} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Select

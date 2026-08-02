@@ -86,9 +86,20 @@ export function TextImporter({ onComplete, onCancel }: TextImporterProps) {
             <h3 className="font-semibold text-gray-900 dark:text-gray-100">
               上传文本文件
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              支持 .txt 和 .md 格式。英文文章可用 ---translation--- 分隔翻译段落。
-            </p>
+            <div className="text-sm text-gray-500 dark:text-gray-400 space-y-2">
+              <p>支持 .txt 和 .md 格式，UTF-8 编码。</p>
+              <p><strong>格式示例：</strong></p>
+              <pre className="rounded bg-gray-100 dark:bg-gray-800 p-2 text-xs">{`Hello world. This is an article.
+
+---translation---
+你好世界。这是一篇文章。
+
+Goodbye world.
+
+---translation---
+再见世界。`}</pre>
+              <p>用空行分隔段落，用 <code>---translation---</code> 标记中文翻译。</p>
+            </div>
             <input
               type="file"
               accept=".txt,.md,.text"
