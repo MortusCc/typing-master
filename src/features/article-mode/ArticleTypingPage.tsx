@@ -7,6 +7,8 @@ import { Modal } from "../../components/ui/Modal.tsx";
 import { Button } from "../../components/ui/Button.tsx";
 import { useMaterialStore } from "../../stores/materialStore.ts";
 import { useTypingStore } from "../../stores/typingStore.ts";
+// eslint-disable-next-line
+const getTypingState = useTypingStore.getState;
 import { getMaterialById } from "../../services/db/repositories.ts";
 import type { Material } from "../../types/material.ts";
 import type { TypingSession } from "../../types/typing.ts";
@@ -67,7 +69,7 @@ export default function ArticleTypingPage() {
       if (showResult) return;
       if (e.key === "Shift") { setShiftDown(true); return; }
       if (e.key === "CapsLock") { setCapsOn(e.getModifierState?.("CapsLock") ?? false); return; }
-      if (e.isComposing || e.key === "Dead") return;
+      if (e.key === "Dead" || e.key === "Process") return;
       if (e.key === "Backspace") { e.preventDefault(); typing.handleBackspace(); return; }
       if (e.key === "Enter") {
         e.preventDefault();
@@ -92,7 +94,20 @@ export default function ArticleTypingPage() {
 
   useEffect(() => {
     const cs = () => setComposing(true);
-    const ce = (e: CompositionEvent) => { setComposing(false); const text = e.data ?? ""; for (const ch of text) { typing.handleKey(ch); const ni = typing.input + ch; const inds = new Set<number>(); for (let i = 0; i < Math.min(ni.length, typing.target.length); i++) { if (ni[i] !== typing.target[i]) inds.add(i); } setErrorIndices(inds); } };
+    const ce = (e: CompositionEvent) => {
+      setComposing(false);
+      const text = e.data ?? "";
+      for (const ch of text) {
+        getTypingState().handleKey(ch);
+        const s = getTypingState();
+        const ni = s.input;
+        const inds = new Set<number>();
+        for (let i = 0; i < Math.min(ni.length, s.target.length); i++) {
+          if (ni[i] !== s.target[i]) inds.add(i);
+        }
+        setErrorIndices(inds);
+      }
+    };
     document.addEventListener("compositionstart", cs);
     document.addEventListener("compositionend", ce);
     return () => { document.removeEventListener("compositionstart", cs); document.removeEventListener("compositionend", ce); };
