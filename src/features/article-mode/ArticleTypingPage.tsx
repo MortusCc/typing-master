@@ -31,7 +31,6 @@ export default function ArticleTypingPage() {
   const [capsOn, setCapsOn] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const prevValRef = useRef("");
 
   useEffect(() => { refresh(); }, [refresh]);
   const articles = materials.filter((m) => m.type === "article_en" || m.type === "article_zh");
@@ -69,29 +68,25 @@ export default function ArticleTypingPage() {
   // Auto-focus hidden input when paragraph changes
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 50);
-    prevValRef.current = "";
   }, [paraIdx]);
 
-  // onInput: captures ALL input including IME-composed text
+  // onInput: sync input value with typingStore in real-time
   const handleInput = useCallback(() => {
     const el = inputRef.current;
     if (!el) return;
     const val = el.value;
-    const prev = prevValRef.current;
-
-    if (val.length > prev.length) {
-      // Characters added
-      const added = val.slice(prev.length);
-      for (const ch of added) getTypingState().handleKey(ch);
-    } else if (val.length < prev.length) {
-      // Backspace(s)
-      const count = prev.length - val.length;
-      for (let i = 0; i < count; i++) getTypingState().handleBackspace();
+    // Sync store to match input value
+    let st = getTypingState();
+    while (st.input.length < val.length) {
+      const ch = val[st.input.length];
+      st.handleKey(ch);
+      st = getTypingState();
     }
-    prevValRef.current = val;
-
+    while (st.input.length > val.length) {
+      st.handleBackspace();
+      st = getTypingState();
+    }
     // Update error indices
-    const st = getTypingState();
     const inds = new Set<number>();
     for (let i = 0; i < Math.min(st.input.length, st.target.length); i++) {
       if (st.input[i] !== st.target[i]) inds.add(i);
@@ -132,7 +127,7 @@ export default function ArticleTypingPage() {
       <input
         ref={inputRef}
         onInput={handleInput}
-        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 font-mono text-lg opacity-30 focus:opacity-100 transition-opacity dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 font-mono text-lg dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="off"
