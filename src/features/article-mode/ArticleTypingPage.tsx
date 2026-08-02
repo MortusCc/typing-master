@@ -1,8 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { VirtualKeyboard } from "../../components/typing/VirtualKeyboard.tsx";
 import { StatsBar } from "../../components/typing/StatsBar.tsx";
-import { MaterialPicker } from "../../components/typing/MaterialPicker.tsx";
 import { ArticleView } from "./ArticleView.tsx";
 import { Modal } from "../../components/ui/Modal.tsx";
 import { Button } from "../../components/ui/Button.tsx";
@@ -16,6 +15,7 @@ const getTypingState = useTypingStore.getState;
 
 export default function ArticleTypingPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { materials, refresh } = useMaterialStore();
   const typing = useTypingStore();
 
@@ -35,6 +35,12 @@ export default function ArticleTypingPage() {
 
   useEffect(() => { refresh(); }, [refresh]);
   const articles = materials.filter((m) => m.type === "article_en" || m.type === "article_zh");
+
+  // Auto-select material from URL parameter
+  useEffect(() => {
+    const materialId = searchParams.get("material");
+    if (materialId && materialId !== selectedId) handleSelect(materialId);
+  }, [searchParams, articles]);
 
   const handleSelect = useCallback(async (id: string) => {
     setSelectedId(id);
@@ -121,30 +127,41 @@ export default function ArticleTypingPage() {
     <div className="space-y-4">
       <input ref={inputRef} className="absolute opacity-0 w-0 h-0" autoComplete="off" />
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Article Typing</h1>`r`n        <MaterialPicker filterType="article" onSelect={handleSelect} />
+        <h1 className="text-xl font-bold">文章打字</h1>
         <select value={selectedId} onChange={(e) => handleSelect(e.target.value)} className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800">
-          <option value="">Select...</option>
+          <option value="">选择素材...</option>
           {articles.map((m) => (<option key={m.id} value={m.id}>{m.name}</option>))}
         </select>
       </div>
-      {!selectedId && (<div className="py-20 text-center text-gray-400">Select an article to start typing</div>)}
+
+      {!selectedId && (
+        <div className="rounded-xl border-2 border-dashed border-amber-300 bg-amber-50 px-6 py-10 text-center dark:border-amber-800 dark:bg-amber-950">
+          <p className="text-amber-700 dark:text-amber-300 text-lg font-semibold mb-2">请先选择打字素材</p>
+          <p className="text-amber-600 dark:text-amber-400 text-sm mb-4">在素材页面浏览并点击"练习"开始，或在此处下拉选择已有素材</p>
+          <Link to="/materials">
+            <Button variant="secondary">前往素材页</Button>
+          </Link>
+        </div>
+      )}
+
       {cur && (<>
         <StatsBar wpm={typing.wpm} accuracy={typing.accuracy} current={doneChars + typing.cursor} total={totalChars} />
         <ArticleView paragraph={cur} translation={translations[paraIdx]} input={typing.input} cursor={typing.cursor} errorIndices={errorIndices} paragraphIndex={paraIdx} totalParagraphs={paragraphs.length} composing={false} />
-        <div className="text-center text-xs text-gray-400">Enter to next paragraph</div>
+        <div className="text-center text-xs text-gray-400">按 Enter 进入下一段</div>
         <VirtualKeyboard nextKey={typing.nextKey} lastKeyResult={typing.lastKeyResult} shiftKey={shiftDown} capsLock={capsOn} disabled={false} />
       </>)}
+
       {showResult && (
-        <Modal open={showResult} onClose={handleBack} title="Result">
+        <Modal open={showResult} onClose={handleBack} title="成绩单">
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="rounded-lg bg-indigo-50 p-3 dark:bg-indigo-950"><p className="text-2xl font-bold text-indigo-600">{session?.wpm ?? 0}</p><p className="text-xs text-gray-500">WPM</p></div>
-              <div className="rounded-lg bg-green-50 p-3 dark:bg-green-950"><p className="text-2xl font-bold text-green-600">{session?.accuracy ?? 100}%</p><p className="text-xs text-gray-500">Accuracy</p></div>
-              <div className="rounded-lg bg-amber-50 p-3 dark:bg-amber-950"><p className="text-2xl font-bold text-amber-600">{totalChars}</p><p className="text-xs text-gray-500">Chars</p></div>
+              <div className="rounded-lg bg-indigo-50 p-3 dark:bg-indigo-950"><p className="text-2xl font-bold text-indigo-600">{session?.wpm ?? 0}</p><p className="text-xs text-gray-500">速度</p></div>
+              <div className="rounded-lg bg-green-50 p-3 dark:bg-green-950"><p className="text-2xl font-bold text-green-600">{session?.accuracy ?? 100}%</p><p className="text-xs text-gray-500">正确率</p></div>
+              <div className="rounded-lg bg-amber-50 p-3 dark:bg-amber-950"><p className="text-2xl font-bold text-amber-600">{totalChars}</p><p className="text-xs text-gray-500">字符数</p></div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="ghost" onClick={handleBack}>Back</Button>
-              <Button onClick={handleRestart}>Again</Button>
+              <Button variant="ghost" onClick={handleBack}>返回</Button>
+              <Button onClick={handleRestart}>再来一次</Button>
             </div>
           </div>
         </Modal>

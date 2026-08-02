@@ -72,7 +72,7 @@ export function MaterialCard({ material, onDelete }: MaterialCardProps) {
       <div className="flex items-center gap-2 mt-auto pt-2">
         <Button
           size="sm"
-          onClick={() => navigate(targetPath)}
+          onClick={() => navigate(`${targetPath}?material=${material.id}`)}
         >
           练习
         </Button>
