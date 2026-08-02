@@ -185,7 +185,7 @@ export default function WordTypingPage() {
             {([20, 30, 50, 100] as const).map((n) => (
               <Button key={n} size="lg" onClick={() => startPlan(n)} className="w-20 h-14 text-lg">{n}</Button>
             ))}
-            <Button size="lg" onClick={() => startPlan(null)} className="w-20 h-14 text-lg">全部</Button>
+            <Button size="lg" onClick={() => startPlan(null)} className="w-20 h-14 text-lg">全部</Button>`n          </div>`n          <div className="mt-3 flex items-center justify-center gap-2">`n            <input type="number" min={1} max={entries.length}`n              className="w-28 rounded-lg border border-gray-300 px-2 py-1.5 text-center text-sm dark:border-gray-600 dark:bg-gray-800" placeholder="自定义数量"`n              onKeyDown={(e) => { if (e.key === "Enter") { const n = parseInt((e.target as HTMLInputElement).value, 10); if (n > 0 && n <= entries.length) startPlan(n); } }}`n            />`n            <Button size="sm" onClick={(e) => { const inp = (e.target as HTMLElement).previousElementSibling as HTMLInputElement; const n = parseInt(inp?.value, 10); if (n > 0 && n <= entries.length) startPlan(n); }}>确定</Button>
           </div>
         </div>
       )}
