@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+﻿import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { VirtualKeyboard } from "../../components/typing/VirtualKeyboard.tsx";
 import { StatsBar } from "../../components/typing/StatsBar.tsx";
@@ -79,44 +79,49 @@ export default function ArticleTypingPage() {
     setErrorIndices(inds);
   };
 
-  // Track IME composition state
-  useEffect(() => {
-    const el = inputRef.current; if (!el) return;
-    const cs = () => { composingRef.current = true; };
-    const ce = () => { composingRef.current = false; };
-    el.addEventListener("compositionstart", cs);
-    el.addEventListener("compositionend", ce);
-    return () => { el.removeEventListener("compositionstart", cs); el.removeEventListener("compositionend", ce); };
-  }, [paraIdx]);
-
-  // Native beforeinput on input element (bypasses React synthetic events)
+  // input + composition events on the hidden input
   useEffect(() => {
     const el = inputRef.current;
     if (!el) return;
-    const handler = (e: InputEvent) => {
-      if (showResultRef.current) return;
-      if (e.inputType === "insertText" || e.inputType === "insertCompositionText" || e.inputType === "insertFromPaste") {
-        e.preventDefault();
-        const text = e.data ?? "";
-        for (const ch of text) getTypingState().handleKey(ch);
-        // Reset input value to keep it empty
-        el.value = "";
-        updateErrors();
-        return;
+
+    let lastVal = "";
+
+    const onInput = () => {
+      if (composingRef.current) return; // skip IME intermediate
+      const val = el.value;
+      if (val.length > lastVal.length) {
+        const added = val.slice(lastVal.length);
+        for (const ch of added) getTypingState().handleKey(ch);
+      } else if (val.length < lastVal.length) {
+        for (let i = 0; i < lastVal.length - val.length; i++) getTypingState().handleBackspace();
       }
-      if (e.inputType === "deleteContentBackward" || e.inputType === "deleteContentForward" || e.inputType === "deleteByCut") {
-        e.preventDefault();
-        getTypingState().handleBackspace();
-        updateErrors();
-        return;
-      }
-      if (e.inputType?.startsWith("insert")) e.preventDefault();
+      lastVal = val;
+      el.value = "";
+      updateErrors();
     };
-    el.addEventListener("beforeinput", handler);
-    return () => el.removeEventListener("beforeinput", handler);
+
+    const onCompositionStart = () => { composingRef.current = true; lastVal = el.value; };
+    const onCompositionEnd = (e: CompositionEvent) => {
+      composingRef.current = false;
+      const text = e.data ?? "";
+      for (const ch of text) getTypingState().handleKey(ch);
+      el.value = "";
+      lastVal = "";
+      updateErrors();
+    };
+
+    el.addEventListener("input", onInput);
+    el.addEventListener("compositionstart", onCompositionStart);
+    el.addEventListener("compositionend", onCompositionEnd);
+    setTimeout(() => el.focus(), 50);
+    return () => {
+      el.removeEventListener("input", onInput);
+      el.removeEventListener("compositionstart", onCompositionStart);
+      el.removeEventListener("compositionend", onCompositionEnd);
+    };
   }, [paraIdx]);
 
-  // keydown: only for Enter navigation + Shift/CapsLock tracking
+  // keydown: only for Enter + Shift/CapsLock
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Shift") { setShiftDown(true); return; }
@@ -145,14 +150,7 @@ export default function ArticleTypingPage() {
 
   return (
     <div className="space-y-4">
-      <input
-        ref={inputRef}
-        className="fixed left-0 top-0 h-0 w-0 opacity-0"
-        autoComplete="off"
-        autoCorrect="off"
-        autoCapitalize="off"
-        spellCheck={false}
-      />
+      <input ref={inputRef} className="absolute opacity-0 w-0 h-0" autoComplete="off" />
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Article Typing</h1>
         <select value={selectedId} onChange={(e) => handleSelect(e.target.value)}
