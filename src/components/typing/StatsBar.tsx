@@ -9,7 +9,7 @@ interface StatsBarProps {
   totalKeystrokes?: number;
 }
 
-export function StatsBar({ wpm, accuracy, current, total, backspaceCount, totalKeystrokes }: StatsBarProps) {
+export function StatsBar({ wpm, current, total, backspaceCount, totalKeystrokes }: StatsBarProps) {
   const pct = total > 0 ? Math.round((current / total) * 100) : 0;
 
   return (
@@ -19,7 +19,7 @@ export function StatsBar({ wpm, accuracy, current, total, backspaceCount, totalK
         <span>{current} / {total}</span>
         <span>{pct}%</span>
         <span>{wpm} WPM</span>
-        <span>{accuracy}%</span>
+        <span>退格 {backspaceCount ?? 0}/{totalKeystrokes ?? 0}</span>
         {backspaceCount != null && totalKeystrokes != null && (
           <span>退格 {backspaceCount}/{totalKeystrokes}</span>
         )}

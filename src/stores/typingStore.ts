@@ -1,4 +1,4 @@
-﻿import { create } from "zustand";
+import { create } from "zustand";
 import type { EngineState, KeyResult, PracticeMode, TypingSession } from "../types/typing.ts";
 import { generateId } from "../services/db/repositories.ts";
 
@@ -135,6 +135,21 @@ export const useTypingStore = create<TypingStore>((set, get) => ({
     });
   },
 
+  saveWordProgress: (currentIdx: number, errorWords: { english: string; chinese: string }[]) => {
+    const { materialId, materialName, startTime, totalKeystrokes, backspaceCount } = get();
+    localStorage.setItem("typing_master_word_progress", JSON.stringify({
+      materialId, materialName, currentIdx, errorWords, startTime, totalKeystrokes, backspaceCount,
+      savedAt: Date.now(),
+    }));
+  },
+  restoreWordProgress: () => {
+    const r = localStorage.getItem("typing_master_word_progress");
+    if (!r) return null;
+    try { return JSON.parse(r); } catch { return null; }
+  },
+  clearWordProgress: () => {
+    localStorage.removeItem("typing_master_word_progress");
+  },
   getSession: () => {
     const { materialId, materialName, mode, startTime, target, cursor, wpm, accuracy, errorCount, state } = get();
     if (!materialId || !startTime) return null;
@@ -151,7 +166,7 @@ export const useTypingStore = create<TypingStore>((set, get) => ({
       errorChars: errorCount,
       wpm,
       accuracy,
-      duration: state === "finished" ? Date.now() - startTime : 0,
+      duration: startTime ? Date.now() - startTime : 0,
       errorDetails: [],
     };
   },
