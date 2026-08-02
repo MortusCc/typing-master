@@ -52,13 +52,11 @@ export const useTypingStore = create<TypingStore>((set, get) => ({
       target,
       input: "",
       cursor: 0,
-      startTime: Date.now(),
-      wpm: 0,
+      startTime: get().startTime ?? Date.now(),
       accuracy: 100,
       nextKey: target[0] ?? null,
       lastKeyResult: null,
       errorCount: 0,
-      totalKeystrokes: 0,
     });
   },
 
