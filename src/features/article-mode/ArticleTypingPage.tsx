@@ -7,11 +7,11 @@ import { Modal } from "../../components/ui/Modal.tsx";
 import { Button } from "../../components/ui/Button.tsx";
 import { useMaterialStore } from "../../stores/materialStore.ts";
 import { useTypingStore } from "../../stores/typingStore.ts";
-// eslint-disable-next-line
-const getTypingState = useTypingStore.getState;
 import { getMaterialById } from "../../services/db/repositories.ts";
 import type { Material } from "../../types/material.ts";
 import type { TypingSession } from "../../types/typing.ts";
+
+const getTypingState = useTypingStore.getState;
 
 export default function ArticleTypingPage() {
   const navigate = useNavigate();
@@ -26,11 +26,12 @@ export default function ArticleTypingPage() {
   const [doneChars, setDoneChars] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const [session, setSession] = useState<TypingSession | null>(null);
-  const [composing, setComposing] = useState(false);
-  const composingRef = useRef(false);
   const [errorIndices, setErrorIndices] = useState<Set<number>>(new Set());
   const [shiftDown, setShiftDown] = useState(false);
   const [capsOn, setCapsOn] = useState(false);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+  const prevValRef = useRef("");
 
   useEffect(() => { refresh(); }, [refresh]);
   const articles = materials.filter((m) => m.type === "article_en" || m.type === "article_zh");
@@ -65,54 +66,56 @@ export default function ArticleTypingPage() {
     setErrorIndices(new Set());
   }, [paraIdx, paragraphs, selectedId, typing]);
 
+  // Auto-focus hidden input when paragraph changes
+  useEffect(() => {
+    setTimeout(() => inputRef.current?.focus(), 50);
+    prevValRef.current = "";
+  }, [paraIdx]);
+
+  // onInput: captures ALL input including IME-composed text
+  const handleInput = useCallback(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    const val = el.value;
+    const prev = prevValRef.current;
+
+    if (val.length > prev.length) {
+      // Characters added
+      const added = val.slice(prev.length);
+      for (const ch of added) getTypingState().handleKey(ch);
+    } else if (val.length < prev.length) {
+      // Backspace(s)
+      const count = prev.length - val.length;
+      for (let i = 0; i < count; i++) getTypingState().handleBackspace();
+    }
+    prevValRef.current = val;
+
+    // Update error indices
+    const st = getTypingState();
+    const inds = new Set<number>();
+    for (let i = 0; i < Math.min(st.input.length, st.target.length); i++) {
+      if (st.input[i] !== st.target[i]) inds.add(i);
+    }
+    setErrorIndices(inds);
+  }, []);
+
+  // keydown only for Enter navigation + Shift tracking (no character interception)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (showResult) return;
       if (e.key === "Shift") { setShiftDown(true); return; }
       if (e.key === "CapsLock") { setCapsOn(e.getModifierState?.("CapsLock") ?? false); return; }
-      if (composingRef.current) return; // let IME handle all keys
-      if (e.key === "Backspace") { e.preventDefault(); typing.handleBackspace(); return; }
       if (e.key === "Enter") {
-        e.preventDefault();
-        if (typing.cursor >= typing.target.length && typing.target.length > 0) advance();
+        const st = getTypingState();
+        if (st.cursor >= st.target.length && st.target.length > 0) advance();
         return;
-      }
-      if (e.key.length === 1) {
-        e.preventDefault(); typing.handleKey(e.key);
-        const ni = typing.input + e.key;
-        const inds = new Set<number>();
-        for (let i = 0; i < Math.min(ni.length, typing.target.length); i++) {
-          if (ni[i] !== typing.target[i]) inds.add(i);
-        }
-        setErrorIndices(inds);
       }
     };
     const keyup = (e: KeyboardEvent) => { if (e.key === "Shift") setShiftDown(false); };
     window.addEventListener("keydown", handler);
     window.addEventListener("keyup", keyup);
     return () => { window.removeEventListener("keydown", handler); window.removeEventListener("keyup", keyup); };
-  }, [typing, showResult, advance]);
-
-  useEffect(() => {
-    const cs = () => { setComposing(true); composingRef.current = true; };
-    const ce = (e: CompositionEvent) => {
-      setComposing(false);
-      const text = e.data ?? "";
-      for (const ch of text) {
-        getTypingState().handleKey(ch);
-        const s = getTypingState();
-        const ni = s.input;
-        const inds = new Set<number>();
-        for (let i = 0; i < Math.min(ni.length, s.target.length); i++) {
-          if (ni[i] !== s.target[i]) inds.add(i);
-        }
-        setErrorIndices(inds);
-      }
-    };
-    document.addEventListener("compositionstart", cs);
-    document.addEventListener("compositionend", ce);
-    return () => { document.removeEventListener("compositionstart", cs); document.removeEventListener("compositionend", ce); };
-  }, []);
+  }, [showResult, advance]);
 
   const handleRestart = () => {
     if (!paragraphs.length) return;
@@ -125,6 +128,17 @@ export default function ArticleTypingPage() {
 
   return (
     <div className="space-y-4">
+      {/* Hidden input that captures ALL text including IME */}
+      <input
+        ref={inputRef}
+        onInput={handleInput}
+        className="fixed left-0 top-0 h-0 w-0 opacity-0"
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
+      />
+
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">文章打字</h1>
         <select value={selectedId} onChange={(e) => handleSelect(e.target.value)}
@@ -138,10 +152,10 @@ export default function ArticleTypingPage() {
         <StatsBar wpm={typing.wpm} accuracy={typing.accuracy} current={doneChars + typing.cursor} total={totalChars} />
         <ArticleView paragraph={cur} translation={translations[paraIdx]} input={typing.input}
           cursor={typing.cursor} errorIndices={errorIndices} paragraphIndex={paraIdx}
-          totalParagraphs={paragraphs.length} composing={composing} />
+          totalParagraphs={paragraphs.length} composing={false} />
         <div className="text-center text-xs text-gray-400">按 Enter 进入下一段</div>
         <VirtualKeyboard nextKey={typing.nextKey} lastKeyResult={typing.lastKeyResult}
-          shiftKey={shiftDown} capsLock={capsOn} disabled={composing} />
+          shiftKey={shiftDown} capsLock={capsOn} disabled={false} />
       </>)}
       {showResult && (
         <Modal open={showResult} onClose={handleBack} title="成绩单">
