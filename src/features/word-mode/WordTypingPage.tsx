@@ -128,7 +128,7 @@ export default function WordTypingPage() {
       if (e.isComposing || e.key === "Dead") return;
       if (e.key === "Enter") { e.preventDefault(); submitWord(); return; }
       if (e.key === "Backspace") { e.preventDefault(); typing.handleBackspace(); return; }
-      if (e.key.length === 1) { e.preventDefault(); typing.handleKey(e.key); }
+      if (e.key.length === 1) { e.preventDefault(); typing.handleKey(e.key); const ni = typing.input; const inds = new Set<number>(); for (let i = 0; i < Math.min(ni.length, typing.target.length); i++) { if (ni[i] !== typing.target[i]) inds.add(i); } setErrorIndices(inds); }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
