@@ -6,7 +6,7 @@ import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <BrowserRouter basename={location.pathname.startsWith('/typing-master') ? '/typing-master' : '/'}>
+    <BrowserRouter>
       <App />
     </BrowserRouter>
   </StrictMode>,
