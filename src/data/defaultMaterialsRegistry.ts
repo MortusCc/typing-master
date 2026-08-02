@@ -49,7 +49,7 @@ async function makeXlsxMaterial(opts: {
   return { id: opts.id, name: opts.name, type: "wordlist", source: "builtin", sourceFile: "default-materials/" + opts.file, importedAt: Date.now(), entries, wordCount: entries.length };
 }
 
-export const DEFAULT_MATERIALS: DefaultMaterialDef[] = [
+export const DEFAULT_MATERIALS: DefaultMaterialDef[] = [`r`n  {`r`n    id: "builtin-test-10",`r`n    name: "测试素材（10词）",`r`n    type: "wordlist",`r`n    buildMaterial: async () => ({`r`n      id: "builtin-test-10", name: "测试素材（10词）", type: "wordlist", source: "builtin", sourceFile: "builtin", importedAt: Date.now(),`r`n      entries: [`r`n        { id: 1, english: "apple", chinese: "苹果" },`r`n        { id: 2, english: "banana", chinese: "香蕉" },`r`n        { id: 3, english: "cat", chinese: "猫" },`r`n        { id: 4, english: "dog", chinese: "狗" },`r`n        { id: 5, english: "elephant", chinese: "大象" },`r`n        { id: 6, english: "fish", chinese: "鱼" },`r`n        { id: 7, english: "grape", chinese: "葡萄" },`r`n        { id: 8, english: "house", chinese: "房子" },`r`n        { id: 9, english: "ice", chinese: "冰" },`r`n        { id: 10, english: "jump", chinese: "跳" },`r`n      ],`r`n      wordCount: 10,`r`n    }),`r`n  },
   // ---- 三年级上册 ----
   {
     id: "builtin-xlsx-3a",
