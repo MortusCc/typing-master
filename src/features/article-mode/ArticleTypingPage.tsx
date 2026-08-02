@@ -31,6 +31,7 @@ export default function ArticleTypingPage() {
   const [capsOn, setCapsOn] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const composingRef = useRef(false);
   const showResultRef = useRef(false);
   showResultRef.current = showResult;
 
@@ -77,6 +78,16 @@ export default function ArticleTypingPage() {
     }
     setErrorIndices(inds);
   };
+
+  // Track IME composition state
+  useEffect(() => {
+    const el = inputRef.current; if (!el) return;
+    const cs = () => { composingRef.current = true; };
+    const ce = () => { composingRef.current = false; };
+    el.addEventListener("compositionstart", cs);
+    el.addEventListener("compositionend", ce);
+    return () => { el.removeEventListener("compositionstart", cs); el.removeEventListener("compositionend", ce); };
+  }, [paraIdx]);
 
   // Native beforeinput on input element (bypasses React synthetic events)
   useEffect(() => {
