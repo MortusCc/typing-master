@@ -113,7 +113,8 @@ export const useTypingStore = create<TypingStore>((set, get) => ({
       cursor: newCursor,
       nextKey: target[newCursor] ?? null,
       lastKeyResult: null,
-      // Don't change totalKeystrokes on backspace
+      backspaceCount: get().backspaceCount + 1,
+      totalKeystrokes: get().totalKeystrokes + 1,
     });
   },
 
