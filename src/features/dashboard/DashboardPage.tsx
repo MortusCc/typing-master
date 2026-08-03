@@ -1,16 +1,14 @@
 ﻿import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStatsStore } from "../../stores/statsStore.ts";
-import { useMaterialStore } from "../../stores/materialStore.ts";
 import { Card } from "../../components/ui/Card.tsx";
 import { Button } from "../../components/ui/Button.tsx";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { recentSessions, loadRecent } = useStatsStore();
-  const { materials, refresh } = useMaterialStore();
-
-  useEffect(() => { loadRecent(); refresh(); }, [loadRecent, refresh]);
+  
+  useEffect(() => { loadRecent(); }, [loadRecent]);
 
   const today = useMemo(() => {
     const todayStr = new Date().toISOString().slice(0, 10);
