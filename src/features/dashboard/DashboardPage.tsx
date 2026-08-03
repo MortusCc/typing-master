@@ -7,7 +7,7 @@ import { Button } from "../../components/ui/Button.tsx";
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { recentSessions, loadRecent } = useStatsStore();
-  
+
   useEffect(() => { loadRecent(); }, [loadRecent]);
 
   const today = useMemo(() => {
@@ -19,16 +19,11 @@ export default function DashboardPage() {
     const avgWpm = Math.round(todays.reduce((a, s) => a + s.wpm, 0) / todays.length);
     const avgBks = Math.round(todays.reduce((a, s) => a + (s.totalKeystrokes > 0 ? s.backspaceCount / s.totalKeystrokes * 100 : 0), 0) / todays.length);
     const totalTime = todays.reduce((a, s) => a + s.duration, 0);
-    return {
-      count: todays.length,
-      avgWpm,
-      avgBks,
-      mins: Math.floor(totalTime / 60000),
-    };
+    return { count: todays.length, avgWpm, avgBks, mins: Math.floor(totalTime / 60000) };
   }, [recentSessions]);
 
   const recentPractices = useMemo(
-    () => recentSessions.slice(0, 4),
+    () => recentSessions.filter((s) => s.materialId).slice(0, 4),
     [recentSessions],
   );
 
@@ -38,36 +33,18 @@ export default function DashboardPage() {
 
       {today ? (
         <div className="grid grid-cols-4 gap-3">
-          <Card>
-            <p className="text-xl font-bold text-indigo-600">{today.count}</p>
-            <p className="text-xs text-gray-500">今日练习</p>
-          </Card>
-          <Card>
-            <p className="text-xl font-bold text-green-600">{today.avgWpm}</p>
-            <p className="text-xs text-gray-500">平均 WPM</p>
-          </Card>
-          <Card>
-            <p className="text-xl font-bold text-amber-600">{today.avgBks}%</p>
-            <p className="text-xs text-gray-500">退格率</p>
-          </Card>
-          <Card>
-            <p className="text-xl font-bold text-blue-600">{today.mins}m</p>
-            <p className="text-xs text-gray-500">今日时长</p>
-          </Card>
+          <Card><p className="text-xl font-bold text-indigo-600">{today.count}</p><p className="text-xs text-gray-500">今日练习</p></Card>
+          <Card><p className="text-xl font-bold text-green-600">{today.avgWpm}</p><p className="text-xs text-gray-500">平均 WPM</p></Card>
+          <Card><p className="text-xl font-bold text-amber-600">{today.avgBks}%</p><p className="text-xs text-gray-500">退格率</p></Card>
+          <Card><p className="text-xl font-bold text-blue-600">{today.mins}m</p><p className="text-xs text-gray-500">今日时长</p></Card>
         </div>
       ) : (
-        <Card>
-          <p className="text-center text-gray-400 py-6">今日尚未练习，开始打字吧!</p>
-        </Card>
+        <Card><p className="text-center text-gray-400 py-6">今日尚未练习，开始打字吧!</p></Card>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Button size="lg" onClick={() => navigate(s.materialId ? "/word?material=" + s.materialId : "/word")} className="h-24 text-lg">
-          单词打字
-        </Button>
-        <Button size="lg" onClick={() => navigate("/article")} className="h-24 text-lg">
-          文章打字
-        </Button>
+        <Button size="lg" onClick={() => navigate("/word")} className="h-24 text-lg">单词打字</Button>
+        <Button size="lg" onClick={() => navigate("/article")} className="h-24 text-lg">文章打字</Button>
       </div>
 
       {recentPractices.length > 0 && (
@@ -76,16 +53,9 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {recentPractices.map((s) => (
               <Card key={s.id} hover>
-                <div
-                  className="cursor-pointer"
-                  onClick={() => navigate(s.materialId ? "/word?material=" + s.materialId : "/word")}
-                >
-                  <p className="font-medium text-sm">
-                    {s.materialName}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {new Date(s.startedAt).toLocaleDateString("zh-CN")}  {s.wpm} WPM
-                  </p>
+                <div className="cursor-pointer" onClick={() => navigate(s.materialId ? "/word?material=" + s.materialId : "/word")}>
+                  <p className="font-medium text-sm">{s.materialName}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{new Date(s.startedAt).toLocaleDateString("zh-CN")}  {s.wpm} WPM</p>
                 </div>
               </Card>
             ))}
