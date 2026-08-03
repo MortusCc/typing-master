@@ -61,7 +61,7 @@ export default function StatsPage() {
             </Card>
             <Card>
               <p className="text-2xl font-bold text-green-600">{overview.avgWpm}</p>
-              <p className="text-xs text-gray-500">平均速度</p>
+              <p className="text-xs text-gray-500">平均 WPM</p>
             </Card>
             <Card>
               <p className="text-2xl font-bold text-amber-600">{overview.avgAcc}%</p>

@@ -73,21 +73,14 @@ export default function WordTypingPage() {
     if (mat?.entries?.length) {
       setEntries(mat.entries);
       setCurrentIdx(0); setErrorWords([]); setShowResult(false); setSession(null); setFeedback(null);
+      // Check saved progress for display only (no auto-resume)
       const savedPlan = localStorage.getItem("typing_plan_" + id);
       if (savedPlan) {
         try {
           const plan = JSON.parse(savedPlan);
-          if (plan.planSize) setPlanSize(plan.planSize);
-          const startIdx = plan.currentStartIdx || 0;
-          setPlanStartIdx(startIdx);
-          if (startIdx < mat.entries.length) {
-            setCurrentIdx(startIdx);
-            typing.init(mat.entries[startIdx].english, id, mat.name, "sequential");
-            typing.saveProgress("word", { materialId: id, materialName: mat.name, currentIdx: startIdx, errorWords: [] });
-            return;
-          }
-        } catch { /* ignore */ }
-      }
+          setPlanStartIdx(plan.currentStartIdx || 0);
+        } catch { setPlanStartIdx(0); }
+      } else { setPlanStartIdx(0); }
       setShowPlanPicker(true);
     }
   }, [typing]);
