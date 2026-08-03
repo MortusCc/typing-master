@@ -26,10 +26,12 @@ export default function DashboardPage() {
     return { count: todays.length, avgWpm, avgBks, mins: Math.floor(totalTime / 60000) };
   }, [recentSessions]);
 
-  const recentPractices = useMemo(
-    () => recentSessions.filter((s) => s.materialId).slice(0, 4),
-    [recentSessions],
-  );
+  const recentPractices = useMemo(() => {
+    const seen = new Set<string>();
+    return recentSessions
+      .filter((s) => s.materialId && !seen.has(s.materialId) && seen.add(s.materialId))
+      .slice(0, 4);
+  }, [recentSessions]);
 
   // Enrich with plan progress from localStorage
   const enrichedPractices = useMemo(() => {
