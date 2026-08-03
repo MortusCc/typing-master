@@ -76,39 +76,22 @@ export default function WordTypingPage() {
     const mat: Material | undefined = await getMaterialById(id);
     if (mat?.entries?.length) {
       setEntries(mat.entries);
-
-      if (continueAfterLoad) {
-        const progressStr = localStorage.getItem("typing_master_progress_word");
-        if (progressStr) {
-          try {
-            const progress = JSON.parse(progressStr);
-            if (progress.materialId === id && progress.currentIdx != null) {
-              setCurrentIdx(progress.currentIdx);
-              setErrorWords(progress.errorWords || []);
-              setShowResult(false); setSession(null); setFeedback(null);
-              if (progress.planSize) setPlanSize(progress.planSize);
-              if (progress.planStartIdx != null) setPlanStartIdx(progress.planStartIdx);
-              setShowPlanPicker(false);
-              const planStr = localStorage.getItem("typing_plan_" + id);
-              if (planStr) { try { setSavedPlan(JSON.parse(planStr)); } catch { setSavedPlan(null); } }
-              else { setSavedPlan(null); }
-              const cur = mat.entries[progress.currentIdx];
-              if (cur) {
-                typing.init(cur.english, id, mat.name, "sequential");
-                typing.restoreStats(progress);
-              }
-              return;
-            }
-          } catch { /* fall through to plan picker */ }
-        }
-      }
-
       setCurrentIdx(0); setErrorWords([]); setShowResult(false); setSession(null); setFeedback(null);
-      const plan = localStorage.getItem("typing_plan_" + id);
-      if (plan) {
-        try { setSavedPlan(JSON.parse(plan)); } catch { setSavedPlan(null); }
-      } else { setSavedPlan(null); }
-      setPlanStartIdx(0);
+
+      let newPlanStartIdx = 0;
+      const planStr = localStorage.getItem("typing_plan_" + id);
+      if (planStr) {
+        try {
+          const parsed = JSON.parse(planStr);
+          setSavedPlan(parsed);
+          if (continueAfterLoad && parsed.currentStartIdx > 0) {
+            newPlanStartIdx = parsed.currentStartIdx;
+          }
+        } catch { setSavedPlan(null); }
+      } else {
+        setSavedPlan(null);
+      }
+      setPlanStartIdx(newPlanStartIdx);
       setShowPlanPicker(true);
     }
   }, [typing]);
@@ -212,16 +195,16 @@ export default function WordTypingPage() {
           )}
           <div className="flex flex-wrap justify-center gap-2">
             {([20, 30, 50, 100] as const).map((n) => (
-              <Button key={n} size="lg" onClick={() => startPlan(n)} className="whitespace-nowrap px-5 h-14 text-lg">{n}</Button>
+              <Button key={n} size="lg" onClick={() => startPlan(n, planStartIdx)} className="whitespace-nowrap px-5 h-14 text-lg">{n}</Button>
             ))}
-            <Button size="lg" onClick={() => startPlan(null)} className="whitespace-nowrap px-5 h-14 text-lg">全部</Button>
+            <Button size="lg" onClick={() => startPlan(null, planStartIdx)} className="whitespace-nowrap px-5 h-14 text-lg">全部</Button>
           </div>
           <div className="mt-3 flex items-center justify-center gap-2">
             <input ref={customPlanRef} type="text" inputMode="numeric" pattern="[0-9]*" defaultValue=""
               className="w-28 rounded-lg border border-gray-300 px-2 py-1.5 text-center text-sm dark:border-gray-600 dark:bg-gray-800" placeholder="自定义数量"
-              onKeyDown={(e) => { if (e.key === "Enter") { const v = customPlanRef.current?.value; const n = parseInt(v || "", 10); if (n > 0 && n <= entries.length) startPlan(n); } }}
+              onKeyDown={(e) => { if (e.key === "Enter") { const v = customPlanRef.current?.value; const n = parseInt(v || "", 10); if (n > 0 && n <= entries.length) startPlan(n, planStartIdx); } }}
             />
-            <Button size="sm" onClick={() => { const v = customPlanRef.current?.value; const n = parseInt(v || "", 10); if (n > 0 && n <= entries.length) startPlan(n); }}>确定</Button>
+            <Button size="sm" onClick={() => { const v = customPlanRef.current?.value; const n = parseInt(v || "", 10); if (n > 0 && n <= entries.length) startPlan(n, planStartIdx); }}>确定</Button>
           </div>
         </div>
       )}
