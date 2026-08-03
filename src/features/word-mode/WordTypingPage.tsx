@@ -181,7 +181,7 @@ export default function WordTypingPage() {
             <Button size="lg" onClick={() => startPlan(null)} className="whitespace-nowrap px-5 h-14 text-lg">全部</Button>
           </div>
           <div className="mt-3 flex items-center justify-center gap-2">
-            <input type="number" min={1} max={entries.length} value={customPlan}
+            <input type="text" inputMode="numeric" pattern="[0-9]*" value={customPlan}
               onChange={(e) => setCustomPlan(e.target.value)}
               className="w-28 rounded-lg border border-gray-300 px-2 py-1.5 text-center text-sm dark:border-gray-600 dark:bg-gray-800" placeholder="自定义数量"
               onKeyDown={(e) => { if (e.key === "Enter") { const n = parseInt(customPlan, 10); if (n > 0 && n <= entries.length) startPlan(n); } }}
