@@ -183,9 +183,9 @@ export default function WordTypingPage() {
           <p className="text-lg font-semibold text-indigo-800 dark:text-indigo-200 mb-3">选择每次练习的词数</p>
           <div className="flex flex-wrap justify-center gap-2">
             {([20, 30, 50, 100] as const).map((n) => (
-              <Button key={n} size="lg" onClick={() => startPlan(n)} className="min-w-[4.5rem] h-14 text-lg">{n}</Button>
+              <Button key={n} size="lg" onClick={() => startPlan(n)} className="whitespace-nowrap px-5 h-14 text-lg">{n}</Button>
             ))}
-            <Button size="lg" onClick={() => startPlan(null)} className="min-w-[4.5rem] h-14 text-lg">全部</Button>
+            <Button size="lg" onClick={() => startPlan(null)} className="whitespace-nowrap px-5 h-14 text-lg">全部</Button>
           </div>
           <div className="mt-3 flex items-center justify-center gap-2">
             <input type="number" min={1} max={entries.length} value={customPlan}
