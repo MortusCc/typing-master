@@ -32,12 +32,12 @@ export default function WordTypingPage() {
   const [showPlanPicker, setShowPlanPicker] = useState(false);
   const [planSize, setPlanSize] = useState<number | null>(null);
   const [planStartIdx, setPlanStartIdx] = useState(0);
+  const [customPlan, setCustomPlan] = useState("");
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { refresh(); }, [refresh]);
   const wordlists = materials.filter((m) => m.type === "wordlist");
 
-  // Check for saved progress on mount
   useEffect(() => {
     const saved = typing.restoreProgress("word");
     if (saved && saved.materialId) { setRestoreData(saved); setShowRestore(true); }
@@ -183,9 +183,17 @@ export default function WordTypingPage() {
           <p className="text-lg font-semibold text-indigo-800 dark:text-indigo-200 mb-3">选择每次练习的词数</p>
           <div className="flex flex-wrap justify-center gap-2">
             {([20, 30, 50, 100] as const).map((n) => (
-              <Button key={n} size="lg" onClick={() => startPlan(n)} className="w-20 h-14 text-lg">{n}</Button>
+              <Button key={n} size="lg" onClick={() => startPlan(n)} className="w-16 h-14 text-lg">{n}</Button>
             ))}
-            <Button size="lg" onClick={() => startPlan(null)} className="w-20 h-14 text-lg">全部</Button>
+            <Button size="lg" onClick={() => startPlan(null)} className="w-16 h-14 text-lg">全部</Button>
+          </div>
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <input type="number" min={1} max={entries.length} value={customPlan}
+              onChange={(e) => setCustomPlan(e.target.value)}
+              className="w-28 rounded-lg border border-gray-300 px-2 py-1.5 text-center text-sm dark:border-gray-600 dark:bg-gray-800" placeholder="自定义数量"
+              onKeyDown={(e) => { if (e.key === "Enter") { const n = parseInt(customPlan, 10); if (n > 0 && n <= entries.length) startPlan(n); } }}
+            />
+            <Button size="sm" onClick={() => { const n = parseInt(customPlan, 10); if (n > 0 && n <= entries.length) startPlan(n); }}>确定</Button>
           </div>
         </div>
       )}
