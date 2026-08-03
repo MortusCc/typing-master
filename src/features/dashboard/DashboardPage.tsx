@@ -1,14 +1,18 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStatsStore } from "../../stores/statsStore.ts";
+import { useMaterialStore } from "../../stores/materialStore.ts";
 import { Card } from "../../components/ui/Card.tsx";
 import { Button } from "../../components/ui/Button.tsx";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { recentSessions, loadRecent } = useStatsStore();
+  const { materials, refresh: refreshMaterials } = useMaterialStore();
+  const [tick, setTick] = useState(0);
 
   useEffect(() => { loadRecent(); }, [loadRecent]);
+  useEffect(() => { refreshMaterials(); }, [refreshMaterials]);
 
   const today = useMemo(() => {
     const todayStr = new Date().toISOString().slice(0, 10);
@@ -26,6 +30,38 @@ export default function DashboardPage() {
     () => recentSessions.filter((s) => s.materialId).slice(0, 4),
     [recentSessions],
   );
+
+  // Enrich with plan progress from localStorage
+  const enrichedPractices = useMemo(() => {
+    const matMap = new Map(materials.map((m) => [m.id, m]));
+    return recentPractices.map((s) => {
+      const planStr = localStorage.getItem("typing_plan_" + s.materialId);
+      let plan: { planSize: number | null; currentStartIdx: number } | null = null;
+      if (planStr) { try { plan = JSON.parse(planStr); } catch { /* ignore */ } }
+      const mat = matMap.get(s.materialId);
+      const total = mat?.entries?.length ?? 0;
+      const hasRemaining = plan && plan.currentStartIdx > 0 && plan.currentStartIdx < total;
+      return { ...s, plan, total, hasRemaining };
+    });
+  }, [recentPractices, materials, tick]);
+
+  const handleContinue = useCallback((materialId: string) => {
+    navigate("/word?material=" + materialId + "&continue=1");
+  }, [navigate]);
+
+  const handleAbandon = useCallback((materialId: string) => {
+    localStorage.removeItem("typing_plan_" + materialId);
+    const progressStr = localStorage.getItem("typing_master_progress_word");
+    if (progressStr) {
+      try {
+        const progress = JSON.parse(progressStr);
+        if (progress.materialId === materialId) {
+          localStorage.removeItem("typing_master_progress_word");
+        }
+      } catch { /* ignore */ }
+    }
+    setTick((n) => n + 1);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -47,15 +83,35 @@ export default function DashboardPage() {
         <Button size="lg" onClick={() => navigate("/article")} className="h-24 text-lg">文章打字</Button>
       </div>
 
-      {recentPractices.length > 0 && (
+      {enrichedPractices.length > 0 && (
         <div>
           <h2 className="mb-3 text-sm font-semibold text-gray-500">最近练习</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {recentPractices.map((s) => (
-              <Card key={s.id} hover>
-                <div className="cursor-pointer" onClick={() => navigate(s.materialId ? "/word?material=" + s.materialId : "/word")}>
-                  <p className="font-medium text-sm">{s.materialName}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{new Date(s.startedAt).toLocaleDateString("zh-CN")}  {s.wpm} WPM</p>
+            {enrichedPractices.map((p) => (
+              <Card key={p.id}>
+                <div>
+                  <p className="font-medium text-sm">{p.materialName}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {new Date(p.startedAt).toLocaleDateString("zh-CN")}  {p.wpm} WPM
+                  </p>
+                  {p.hasRemaining && p.plan ? (
+                    <>
+                      <p className="text-xs text-indigo-600 mt-1">
+                        已练第 {p.plan.currentStartIdx}/{p.total} 词
+                      </p>
+                      <div className="mt-2 flex gap-2">
+                        <Button size="sm" onClick={() => handleContinue(p.materialId)}>继续</Button>
+                        <Button size="sm" variant="ghost" onClick={() => handleAbandon(p.materialId)}>放弃</Button>
+                      </div>
+                    </>
+                  ) : (
+                    <div
+                      className="mt-2 cursor-pointer"
+                      onClick={() => navigate("/word?material=" + p.materialId)}
+                    >
+                      <Button size="sm" variant="secondary">新练习</Button>
+                    </div>
+                  )}
                 </div>
               </Card>
             ))}

@@ -40,6 +40,8 @@ export default function WordTypingPage() {
   const wordlists = materials.filter((m) => m.type === "wordlist");
 
   useEffect(() => {
+    // skip restore prompt when explicitly continuing from dashboard
+    if (searchParams.get("continue") === "1") return;
     const saved = typing.restoreProgress("word");
     if (saved && saved.materialId) { setRestoreData(saved); setShowRestore(true); }
   }, []);
@@ -65,14 +67,42 @@ export default function WordTypingPage() {
 
   useEffect(() => {
     const materialId = searchParams.get("material");
-    if (materialId && materialId !== selectedId) handleSelectMaterial(materialId);
+    const shouldContinue = searchParams.get("continue") === "1";
+    if (materialId && materialId !== selectedId) handleSelectMaterial(materialId, shouldContinue);
   }, [searchParams, wordlists]);
 
-  const handleSelectMaterial = useCallback(async (id: string) => {
+  const handleSelectMaterial = useCallback(async (id: string, continueAfterLoad = false) => {
     setSelectedId(id);
     const mat: Material | undefined = await getMaterialById(id);
     if (mat?.entries?.length) {
       setEntries(mat.entries);
+
+      if (continueAfterLoad) {
+        const progressStr = localStorage.getItem("typing_master_progress_word");
+        if (progressStr) {
+          try {
+            const progress = JSON.parse(progressStr);
+            if (progress.materialId === id && progress.currentIdx != null) {
+              setCurrentIdx(progress.currentIdx);
+              setErrorWords(progress.errorWords || []);
+              setShowResult(false); setSession(null); setFeedback(null);
+              if (progress.planSize) setPlanSize(progress.planSize);
+              if (progress.planStartIdx != null) setPlanStartIdx(progress.planStartIdx);
+              setShowPlanPicker(false);
+              const planStr = localStorage.getItem("typing_plan_" + id);
+              if (planStr) { try { setSavedPlan(JSON.parse(planStr)); } catch { setSavedPlan(null); } }
+              else { setSavedPlan(null); }
+              const cur = mat.entries[progress.currentIdx];
+              if (cur) {
+                typing.init(cur.english, id, mat.name, "sequential");
+                typing.restoreStats(progress);
+              }
+              return;
+            }
+          } catch { /* fall through to plan picker */ }
+        }
+      }
+
       setCurrentIdx(0); setErrorWords([]); setShowResult(false); setSession(null); setFeedback(null);
       const plan = localStorage.getItem("typing_plan_" + id);
       if (plan) {
