@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+﻿import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStatsStore } from "../../stores/statsStore.ts";
 import { useMaterialStore } from "../../stores/materialStore.ts";
@@ -30,8 +30,8 @@ export default function DashboardPage() {
   }, [recentSessions]);
 
   const recentPractices = useMemo(
-    () => materials.slice(0, 4),
-    [materials],
+    () => recentSessions.slice(0, 4),
+    [recentSessions],
   );
 
   return (
