@@ -132,6 +132,8 @@ export default function WordTypingPage() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (showResult) return;
+      const el = e.target as HTMLElement;
+      if (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable) return;
       if (e.isComposing || e.key === "Dead") return;
       if (e.key === "Enter") { e.preventDefault(); submitWord(); return; }
       if (e.key === "Backspace") { e.preventDefault(); typing.handleBackspace(); return; }
