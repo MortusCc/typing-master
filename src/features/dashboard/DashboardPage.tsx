@@ -62,7 +62,7 @@ export default function DashboardPage() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Button size="lg" onClick={() => navigate("/word?material=")} className="h-24 text-lg">
+        <Button size="lg" onClick={() => navigate(s.materialId ? "/word?material=" + s.materialId : "/word")} className="h-24 text-lg">
           单词打字
         </Button>
         <Button size="lg" onClick={() => navigate("/article")} className="h-24 text-lg">
@@ -78,7 +78,7 @@ export default function DashboardPage() {
               <Card key={s.id} hover>
                 <div
                   className="cursor-pointer"
-                  onClick={() => navigate("/word?material=")}
+                  onClick={() => navigate(s.materialId ? "/word?material=" + s.materialId : "/word")}
                 >
                   <p className="font-medium text-sm">
                     {s.materialName}
