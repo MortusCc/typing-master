@@ -32,7 +32,8 @@ export default function WordTypingPage() {
   const [showPlanPicker, setShowPlanPicker] = useState(false);
   const [planSize, setPlanSize] = useState<number | null>(null);
   const [planStartIdx, setPlanStartIdx] = useState(0);
-  const [customPlan, setCustomPlan] = useState("");
+  const [savedPlan, setSavedPlan] = useState<{ planSize: number; currentStartIdx: number } | null>(null);
+  const customPlanRef = useRef<HTMLInputElement>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { refresh(); }, [refresh]);
@@ -73,20 +74,17 @@ export default function WordTypingPage() {
     if (mat?.entries?.length) {
       setEntries(mat.entries);
       setCurrentIdx(0); setErrorWords([]); setShowResult(false); setSession(null); setFeedback(null);
-      // Check saved progress for display only (no auto-resume)
-      const savedPlan = localStorage.getItem("typing_plan_" + id);
-      if (savedPlan) {
-        try {
-          const plan = JSON.parse(savedPlan);
-          setPlanStartIdx(plan.currentStartIdx || 0);
-        } catch { setPlanStartIdx(0); }
-      } else { setPlanStartIdx(0); }
+      const plan = localStorage.getItem("typing_plan_" + id);
+      if (plan) {
+        try { setSavedPlan(JSON.parse(plan)); } catch { setSavedPlan(null); }
+      } else { setSavedPlan(null); }
+      setPlanStartIdx(0);
       setShowPlanPicker(true);
     }
   }, [typing]);
 
-  const startPlan = useCallback((n: number | null) => {
-    const start = 0;
+  const startPlan = useCallback((n: number | null, startIdx = 0) => {
+    const start = startIdx || 0;
     setPlanSize(n); setPlanStartIdx(start); setCurrentIdx(start); setShowPlanPicker(false);
     localStorage.setItem("typing_plan_" + selectedId, JSON.stringify({ planSize: n, currentStartIdx: start }));
     typing.init(entries[start].english, selectedId, typing.materialName, "sequential");
@@ -174,6 +172,12 @@ export default function WordTypingPage() {
       {showPlanPicker && selectedId && (
         <div className="rounded-xl border-2 border-indigo-300 bg-indigo-50 p-6 text-center dark:border-indigo-950 dark:bg-indigo-900">
           <p className="text-lg font-semibold text-indigo-800 dark:text-indigo-200 mb-3">选择每次练习的词数</p>
+          {savedPlan && savedPlan.currentStartIdx > 0 && savedPlan.currentStartIdx < entries.length && (
+            <div className="mb-3 rounded-lg bg-white/50 px-3 py-2 text-sm dark:bg-white/10">
+              <span className="text-gray-600 dark:text-gray-400">上次已练到第 {savedPlan.currentStartIdx} 词（共 {entries.length} 词）</span>
+              <Button size="sm" variant="ghost" className="ml-2" onClick={() => startPlan(savedPlan.planSize || null, savedPlan.currentStartIdx)}>从上次继续</Button>
+            </div>
+          )}
           <div className="flex flex-wrap justify-center gap-2">
             {([20, 30, 50, 100] as const).map((n) => (
               <Button key={n} size="lg" onClick={() => startPlan(n)} className="whitespace-nowrap px-5 h-14 text-lg">{n}</Button>
@@ -181,12 +185,11 @@ export default function WordTypingPage() {
             <Button size="lg" onClick={() => startPlan(null)} className="whitespace-nowrap px-5 h-14 text-lg">全部</Button>
           </div>
           <div className="mt-3 flex items-center justify-center gap-2">
-            <input type="text" inputMode="numeric" pattern="[0-9]*" value={customPlan}
-              onChange={(e) => setCustomPlan(e.target.value)}
+            <input ref={customPlanRef} type="text" inputMode="numeric" pattern="[0-9]*" defaultValue=""
               className="w-28 rounded-lg border border-gray-300 px-2 py-1.5 text-center text-sm dark:border-gray-600 dark:bg-gray-800" placeholder="自定义数量"
-              onKeyDown={(e) => { if (e.key === "Enter") { const n = parseInt(customPlan, 10); if (n > 0 && n <= entries.length) startPlan(n); } }}
+              onKeyDown={(e) => { if (e.key === "Enter") { const v = customPlanRef.current?.value; const n = parseInt(v || "", 10); if (n > 0 && n <= entries.length) startPlan(n); } }}
             />
-            <Button size="sm" onClick={() => { const n = parseInt(customPlan, 10); if (n > 0 && n <= entries.length) startPlan(n); }}>确定</Button>
+            <Button size="sm" onClick={() => { const v = customPlanRef.current?.value; const n = parseInt(v || "", 10); if (n > 0 && n <= entries.length) startPlan(n); }}>确定</Button>
           </div>
         </div>
       )}
