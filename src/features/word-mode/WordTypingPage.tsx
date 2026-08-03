@@ -33,6 +33,7 @@ export default function WordTypingPage() {
   const [planSize, setPlanSize] = useState<number | null>(null);
   const [planStartIdx, setPlanStartIdx] = useState(0);
   const [savedPlan, setSavedPlan] = useState<{ planSize: number; currentStartIdx: number } | null>(null);
+  const [materialName, setMaterialName] = useState("");
   const customPlanRef = useRef<HTMLInputElement>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -77,6 +78,7 @@ export default function WordTypingPage() {
     if (mat?.entries?.length) {
       setEntries(mat.entries);
       setCurrentIdx(0); setErrorWords([]); setShowResult(false); setSession(null); setFeedback(null);
+      setMaterialName(mat.name);
 
       let newPlanStartIdx = 0;
       const planStr = localStorage.getItem("typing_plan_" + id);
@@ -100,9 +102,9 @@ export default function WordTypingPage() {
     const start = startIdx || 0;
     setPlanSize(n); setPlanStartIdx(start); setCurrentIdx(start); setShowPlanPicker(false);
     localStorage.setItem("typing_plan_" + selectedId, JSON.stringify({ planSize: n, currentStartIdx: start }));
-    typing.init(entries[start].english, selectedId, typing.materialName, "sequential");
-    typing.saveProgress("word", { materialId: selectedId, materialName: typing.materialName, currentIdx: start, errorWords: [] });
-  }, [selectedId, entries, typing]);
+    typing.init(entries[start].english, selectedId, materialName, "sequential");
+    typing.saveProgress("word", { materialId: selectedId, materialName, currentIdx: start, errorWords: [] });
+  }, [selectedId, entries, typing, materialName]);
 
   const advance = useCallback(() => {
     const nextIdx = currentIdx + 1;
