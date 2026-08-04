@@ -162,6 +162,9 @@ export const useTypingStore = create<TypingStore>((set, get) => ({
     if (data.startTime != null) updates.startTime = data.startTime as number;
     if (Object.keys(updates).length > 0) set(updates);
   },
+  resetStats: () => {
+    set({ backspaceCount: 0, totalKeystrokes: 0, startTime: null });
+  },
   getStats: () => {
     const { backspaceCount, totalKeystrokes, startTime } = get();
     return { backspaceCount, totalKeystrokes, startTime };

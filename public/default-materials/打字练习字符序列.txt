@@ -1,0 +1,146 @@
+# 打字练习字符序列 (5个一组)
+# 从基准行开始，逐步扩展至全键盘，包含重复练习
+
+# ========== 基准行: 单键重复 ==========
+aaaaa
+sssss
+ddddd
+fffff
+ggggg
+hhhhh
+jjjjj
+kkkkk
+lllll
+;;;;;
+
+# ========== 基准行: 顺序组合 ==========
+asdfg
+asdfg
+asdfg
+hjkl;
+hjkl;
+hjkl;
+gfdsa
+gfdsa
+;lkjh
+;lkjh
+
+# ========== 上排键: 单键重复 ==========
+qqqqq
+wwwww
+eeeee
+rrrrr
+ttttt
+yyyyy
+uuuuu
+iiiii
+ooooo
+ppppp
+
+# ========== 上排键与基准行交替 (伸展练习) ==========
+aqaqa
+swsws
+deded
+frfrf
+gtgtg
+hyhyh
+jujuj
+kikik
+lolol
+;p;p;
+
+# ========== 上排键: 顺序组合 ==========
+qwert
+qwert
+qwert
+yuiop
+yuiop
+yuiop
+
+# ========== 下排键: 单键重复 ==========
+zzzzz
+xxxxx
+ccccc
+vvvvv
+bbbbb
+nnnnn
+mmmmm
+,,,,,
+.....
+/////
+
+# ========== 下排键与基准行交替 ==========
+azaza
+sxsxs
+dcdcd
+fvfvf
+gbgbg
+hnhnh
+jmjmj
+k,k,k
+l.l.l
+;/;/;
+
+# ========== 下排键: 顺序组合 ==========
+zxcvb
+zxcvb
+zxcvb
+nm,./
+nm,./
+nm,./
+
+# ========== 食指复杂区域练习 ==========
+# 左手食指: R F V / T G B
+rfrfr
+tgtgt
+fvfvf
+bgbgb
+# 右手食指: Y H N / U J M
+yhyhy
+jujuj
+hnhnh
+jmjmj
+
+# ========== 全列混合 (手指独立) ==========
+qazws
+xedcr
+fvtgb
+yhnuj
+mik,o
+l.p;/
+
+# ========== 综合练习 (包含全部字母) ==========
+# 取自: the quick brown fox jumps over the lazy dog
+thequ
+ickbr
+ownfo
+xjump
+sover
+thela
+zydog
+
+# ========== 字母顺序分组练习 ==========
+# 按26个字母顺序，每5个一组，重复多次
+abcde
+fghij
+klmno
+pqrst
+uvwxy
+zabcd
+efghi
+jklmn
+opqrs
+tuvwx
+yzabc
+defgh
+ijklm
+nopqr
+stuvw
+xyzab
+cdefg
+hijkl
+mnopq
+rstuv
+wxyza
+
+# 练习愉快！

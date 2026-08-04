@@ -1,10 +1,11 @@
 import type { Material } from "../types/material.ts";
+import { parseTextContent } from "../services/parser/textParser.ts";
 import { defaultEnglishSentences } from "./defaultEnglishSentences.ts";
 import { defaultChineseArticles } from "./defaultChineseArticles.ts";
 import { defaultEnglishFables } from "./defaultEnglishFables.ts";
 import { defaultChineseClassics } from "./defaultChineseClassics.ts";
 
-export const DEFAULT_MATERIALS_VERSION = "v5";
+export const DEFAULT_MATERIALS_VERSION = "v6";
 
 export interface DefaultMaterialDef {
   id: string;
@@ -44,6 +45,17 @@ async function makeXlsxMaterial(opts: {
   return { id: opts.id, name: opts.name, type: "wordlist", source: "builtin", sourceFile: "default-materials/" + opts.file, importedAt: Date.now(), entries, wordCount: entries.length };
 }
 
+async function makeTxtArticleMaterial(opts: {
+  id: string; name: string; file: string; type: "article_en" | "article_zh";
+}): Promise<Material> {
+  const resp = await fetch(import.meta.env.BASE_URL + "default-materials/" + encodeURIComponent(opts.file));
+  if (!resp.ok) throw new Error("Failed to load " + opts.file + ": " + resp.status);
+  const text = await resp.text();
+  const segments = parseTextContent(text);
+  const wordCount = segments.reduce((s, x) => s + (x.type === "paragraph" ? x.content.length : 0), 0);
+  return { id: opts.id, name: opts.name, type: opts.type, source: "builtin", sourceFile: "default-materials/" + opts.file, importedAt: Date.now(), segments, wordCount };
+}
+
 export const DEFAULT_MATERIALS: DefaultMaterialDef[] = [
   {
     id: "builtin-test-10",
@@ -52,88 +64,94 @@ export const DEFAULT_MATERIALS: DefaultMaterialDef[] = [
     buildMaterial: async () => ({
       id: "builtin-test-10", name: "测试素材（10词）", type: "wordlist", source: "builtin", sourceFile: "builtin", importedAt: Date.now(),
       entries: [
-        { id: 1, english: "apple", chinese: "\u82F9\u679C" },
-        { id: 2, english: "banana", chinese: "\u9999\u8549" },
-        { id: 3, english: "cat", chinese: "\u732B" },
-        { id: 4, english: "dog", chinese: "\u72D7" },
-        { id: 5, english: "elephant", chinese: "\u5927\u8C61" },
-        { id: 6, english: "fish", chinese: "\u9C7C" },
-        { id: 7, english: "grape", chinese: "\u8461\u8404" },
-        { id: 8, english: "house", chinese: "\u623F\u5B50" },
-        { id: 9, english: "ice", chinese: "\u51B0" },
-        { id: 10, english: "jump", chinese: "\u8DF3" },
+        { id: 1, english: "apple", chinese: "苹果" },
+        { id: 2, english: "banana", chinese: "香蕉" },
+        { id: 3, english: "cat", chinese: "猫" },
+        { id: 4, english: "dog", chinese: "狗" },
+        { id: 5, english: "elephant", chinese: "大象" },
+        { id: 6, english: "fish", chinese: "鱼" },
+        { id: 7, english: "grape", chinese: "葡萄" },
+        { id: 8, english: "house", chinese: "房子" },
+        { id: 9, english: "ice", chinese: "冰" },
+        { id: 10, english: "jump", chinese: "跳" },
       ],
       wordCount: 10,
     }),
   },
   {
     id: "builtin-xlsx-3a",
-    name: "\u4E09\u5E74\u7EA7\u82F1\u8BED\u4E0A\u518C",
+    name: "三年级英语上册",
     type: "wordlist",
-    buildMaterial: () => makeXlsxMaterial({ id: "builtin-xlsx-3a", name: "\u4E09\u5E74\u7EA7\u82F1\u8BED\u4E0A\u518C", file: "\u4E09\u5E74\u7EA7\u82F1\u8BED\u5355\u8BCD\u97F3\u6807\u8868.xlsx", sheet: 0, startRow: 2, enCol: 1, zhCol: 3, phoneticUkCol: 2 }),
+    buildMaterial: () => makeXlsxMaterial({ id: "builtin-xlsx-3a", name: "三年级英语上册", file: "三年级英语单词音标表.xlsx", sheet: 0, startRow: 2, enCol: 1, zhCol: 3, phoneticUkCol: 2 }),
   },
   {
     id: "builtin-xlsx-3b",
-    name: "\u4E09\u5E74\u7EA7\u82F1\u8BED\u4E0B\u518C",
+    name: "三年级英语下册",
     type: "wordlist",
-    buildMaterial: () => makeXlsxMaterial({ id: "builtin-xlsx-3b", name: "\u4E09\u5E74\u7EA7\u82F1\u8BED\u4E0B\u518C", file: "\u4E09\u5E74\u7EA7\u82F1\u8BED\u5355\u8BCD\u97F3\u6807\u8868.xlsx", sheet: 1, startRow: 2, enCol: 1, zhCol: 3, phoneticUkCol: 2 }),
+    buildMaterial: () => makeXlsxMaterial({ id: "builtin-xlsx-3b", name: "三年级英语下册", file: "三年级英语单词音标表.xlsx", sheet: 1, startRow: 2, enCol: 1, zhCol: 3, phoneticUkCol: 2 }),
   },
   {
     id: "builtin-xlsx-wordlist-2",
-    name: "\u56DB\u5E74\u7EA7\u82F1\u8BED\u4E0B\u518C",
+    name: "四年级英语下册",
     type: "wordlist",
-    buildMaterial: () => makeXlsxMaterial({ id: "builtin-xlsx-wordlist-2", name: "\u56DB\u5E74\u7EA7\u82F1\u8BED\u4E0B\u518C", file: "\u56DB\u4E0B\u82F1\u8BED\u5355\u8BCD\u97F3\u6807\u8868.xlsx", startRow: 3, enCol: 1, zhCol: 4, phoneticUkCol: 2, phoneticUsCol: 3 }),
+    buildMaterial: () => makeXlsxMaterial({ id: "builtin-xlsx-wordlist-2", name: "四年级英语下册", file: "四下英语单词音标表.xlsx", startRow: 3, enCol: 1, zhCol: 4, phoneticUkCol: 2, phoneticUsCol: 3 }),
   },
   {
     id: "builtin-xlsx-4a",
-    name: "\u56DB\u5E74\u7EA7\u82F1\u8BED\u4E0A\u518C",
+    name: "四年级英语上册",
     type: "wordlist",
-    buildMaterial: () => makeXlsxMaterial({ id: "builtin-xlsx-4a", name: "\u56DB\u5E74\u7EA7\u82F1\u8BED\u4E0A\u518C", file: "\u56DB+\u4E94\u4E0A\u8BCD\u6C47\u8868.xlsx", startRow: 238, enCol: 1, zhCol: 4, phoneticUkCol: 2, phoneticUsCol: 3 }),
+    buildMaterial: () => makeXlsxMaterial({ id: "builtin-xlsx-4a", name: "四年级英语上册", file: "四+五上词汇表.xlsx", startRow: 238, enCol: 1, zhCol: 4, phoneticUkCol: 2, phoneticUsCol: 3 }),
   },
   {
     id: "builtin-xlsx-5a",
-    name: "\u4E94\u5E74\u7EA7\u82F1\u8BED\u4E0A\u518C",
+    name: "五年级英语上册",
     type: "wordlist",
-    buildMaterial: () => makeXlsxMaterial({ id: "builtin-xlsx-5a", name: "\u4E94\u5E74\u7EA7\u82F1\u8BED\u4E0A\u518C", file: "\u56DB+\u4E94\u4E0A\u8BCD\u6C47\u8868.xlsx", startRow: 119, endRow: 238, enCol: 1, zhCol: 4, phoneticUkCol: 2, phoneticUsCol: 3 }),
+    buildMaterial: () => makeXlsxMaterial({ id: "builtin-xlsx-5a", name: "五年级英语上册", file: "四+五上词汇表.xlsx", startRow: 119, endRow: 238, enCol: 1, zhCol: 4, phoneticUkCol: 2, phoneticUsCol: 3 }),
   },
   {
     id: "builtin-en-sentences",
-    name: "\u82F1\u6587\u77ED\u53E5\u7EC3\u4E60",
+    name: "英文短句练习",
     type: "article_en",
     buildMaterial: async () => ({
-      id: "builtin-en-sentences", name: "\u82F1\u6587\u77ED\u53E5\u7EC3\u4E60", type: "article_en", source: "builtin", sourceFile: "builtin", importedAt: Date.now(),
+      id: "builtin-en-sentences", name: "英文短句练习", type: "article_en", source: "builtin", sourceFile: "builtin", importedAt: Date.now(),
       segments: defaultEnglishSentences,
       wordCount: defaultEnglishSentences.reduce((s, x) => s + (x.type === "paragraph" ? x.content.split(/\s+/).length : 0), 0),
     }),
   },
   {
     id: "builtin-zh-articles",
-    name: "\u4E2D\u6587\u6BB5\u843D\u7EC3\u4E60",
+    name: "中文段落练习",
     type: "article_zh",
     buildMaterial: async () => ({
-      id: "builtin-zh-articles", name: "\u4E2D\u6587\u6BB5\u843D\u7EC3\u4E60", type: "article_zh", source: "builtin", sourceFile: "builtin", importedAt: Date.now(),
+      id: "builtin-zh-articles", name: "中文段落练习", type: "article_zh", source: "builtin", sourceFile: "builtin", importedAt: Date.now(),
       segments: defaultChineseArticles,
       wordCount: defaultChineseArticles.reduce((s, x) => s + (x.type === "paragraph" ? x.content.length : 0), 0),
     }),
   },
   {
     id: "builtin-en-fables",
-    name: "\u82F1\u6587\u5BD3\u8A00\u4E09\u5219",
+    name: "英文寓言三则",
     type: "article_en",
     buildMaterial: async () => ({
-      id: "builtin-en-fables", name: "\u82F1\u6587\u5BD3\u8A00\u4E09\u5219", type: "article_en", source: "builtin", sourceFile: "builtin", importedAt: Date.now(),
+      id: "builtin-en-fables", name: "英文寓言三则", type: "article_en", source: "builtin", sourceFile: "builtin", importedAt: Date.now(),
       segments: defaultEnglishFables,
       wordCount: defaultEnglishFables.reduce((s, x) => s + (x.type === "paragraph" ? x.content.split(/\s+/).length : 0), 0),
     }),
   },
   {
     id: "builtin-zh-classics",
-    name: "\u4E94\u4E0A\u53E4\u6587\u7ECF\u5178\u4E0E\u8BD7\u8BCD",
+    name: "五上古文经典与诗词",
     type: "article_zh",
     buildMaterial: async () => ({
-      id: "builtin-zh-classics", name: "\u4E94\u4E0A\u53E4\u6587\u7ECF\u5178\u4E0E\u8BD7\u8BCD", type: "article_zh", source: "builtin", sourceFile: "builtin", importedAt: Date.now(),
+      id: "builtin-zh-classics", name: "五上古文经典与诗词", type: "article_zh", source: "builtin", sourceFile: "builtin", importedAt: Date.now(),
       segments: defaultChineseClassics,
       wordCount: defaultChineseClassics.reduce((s, x) => s + (x.type === "paragraph" ? x.content.length : 0), 0),
     }),
+  },
+  {
+    id: "builtin-char-seq",
+    name: "打字练习字符序列",
+    type: "article_en",
+    buildMaterial: () => makeTxtArticleMaterial({ id: "builtin-char-seq", name: "打字练习字符序列", file: "打字练习字符序列.txt", type: "article_en" }),
   },
 ];
