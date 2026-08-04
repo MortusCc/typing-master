@@ -12,26 +12,31 @@ export function detectLanguage(text: string): DetectedLanguage {
   return "mixed";
 }
 
+function stripComments(text: string): string {
+  return text
+    .split("\n")
+    .filter((line) => !line.trimStart().startsWith("#"))
+    .join("\n");
+}
+
 export function parseTextContent(text: string): ArticleSegment[] {
+  const cleanedText = stripComments(text);
   const segments: ArticleSegment[] = [];
   const translationMarker = /^---\s*translation\s*---\s*$/im;
 
   // Split by the translation marker
-  const parts = text.split(translationMarker);
+  const parts = cleanedText.split(translationMarker);
 
   for (const part of parts) {
     const trimmed = part.trim();
     if (!trimmed) continue;
 
-    // Determine if this is a translation block based on position
-    // First block before any marker is paragraph; blocks after markers are translations
     const isFirstPart = parts.indexOf(part) === 0;
     const hasPriorMarker = parts.slice(0, parts.indexOf(part)).some((p) =>
       translationMarker.test(p)
     );
 
     if (isFirstPart && parts.length === 1) {
-      // No markers at all: split into paragraphs
       const paragraphs = trimmed.split(/\n{2,}/);
       for (const para of paragraphs) {
         const clean = para.trim();
@@ -55,9 +60,36 @@ export function parseTextContent(text: string): ArticleSegment[] {
   return segments;
 }
 
+/** Parse character-sequence practice files: strip # comments, group by empty lines,
+ *  then split each block into paragraph-sized chunks of 5 lines each. */
+export function parseCharSeqContent(text: string): ArticleSegment[] {
+  const cleanedText = stripComments(text);
+
+  // Split into blocks by empty lines
+  const blocks = cleanedText.split(/\n{2,}/);
+
+  const segments: ArticleSegment[] = [];
+
+  for (const block of blocks) {
+    const lines = block
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+
+    if (lines.length === 0) continue;
+
+    // Chunk lines into groups of 5 for reasonable paragraph size
+    const CHUNK_SIZE = 5;
+    for (let i = 0; i < lines.length; i += CHUNK_SIZE) {
+      const chunk = lines.slice(i, i + CHUNK_SIZE);
+      segments.push({ type: "paragraph", content: chunk.join("\n") });
+    }
+  }
+
+  return segments;
+}
+
 export function countWords(text: string): number {
-  // For English: count space-separated words
-  // For Chinese: count characters
   const lang = detectLanguage(text);
   if (lang === "zh") {
     return (text.match(/[\u4e00-\u9fff]/g) ?? []).length;

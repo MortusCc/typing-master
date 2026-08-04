@@ -1,5 +1,5 @@
-import type { Material } from "../types/material.ts";
-import { parseTextContent } from "../services/parser/textParser.ts";
+import type { Material, ArticleSegment } from "../types/material.ts";
+import { parseTextContent, parseCharSeqContent } from "../services/parser/textParser.ts";
 import { defaultEnglishSentences } from "./defaultEnglishSentences.ts";
 import { defaultChineseArticles } from "./defaultChineseArticles.ts";
 import { defaultEnglishFables } from "./defaultEnglishFables.ts";
@@ -47,11 +47,12 @@ async function makeXlsxMaterial(opts: {
 
 async function makeTxtArticleMaterial(opts: {
   id: string; name: string; file: string; type: "article_en" | "article_zh";
+  parser?: (text: string) => ArticleSegment[];
 }): Promise<Material> {
   const resp = await fetch(import.meta.env.BASE_URL + "default-materials/" + encodeURIComponent(opts.file));
   if (!resp.ok) throw new Error("Failed to load " + opts.file + ": " + resp.status);
   const text = await resp.text();
-  const segments = parseTextContent(text);
+  const segments = (opts.parser ?? parseTextContent)(text);
   const wordCount = segments.reduce((s, x) => s + (x.type === "paragraph" ? x.content.length : 0), 0);
   return { id: opts.id, name: opts.name, type: opts.type, source: "builtin", sourceFile: "default-materials/" + opts.file, importedAt: Date.now(), segments, wordCount };
 }
@@ -152,6 +153,6 @@ export const DEFAULT_MATERIALS: DefaultMaterialDef[] = [
     id: "builtin-char-seq",
     name: "打字练习字符序列",
     type: "article_en",
-    buildMaterial: () => makeTxtArticleMaterial({ id: "builtin-char-seq", name: "打字练习字符序列", file: "打字练习字符序列.txt", type: "article_en" }),
+    buildMaterial: () => makeTxtArticleMaterial({ id: "builtin-char-seq", name: "打字练习字符序列", file: "打字练习字符序列.txt", type: "article_en", parser: parseCharSeqContent }),
   },
 ];
