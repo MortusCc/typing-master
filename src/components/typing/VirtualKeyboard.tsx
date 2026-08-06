@@ -26,7 +26,8 @@ export const VirtualKeyboard = memo(function VirtualKeyboard({
   const formatKey = (key: string) => {
     if (key === "Space") return "";
     if (MOD_KEYS.has(key)) return key;
-    if (upper && SHIFT_MAP[key]) return SHIFT_MAP[key];
+    // Shift符号: 只有 shiftKey 真正按下才切换，capsLock 不影响符号键
+    if (shiftKey && SHIFT_MAP[key]) return SHIFT_MAP[key];
     return upper ? key.toUpperCase() : key;
   };
 
@@ -34,7 +35,7 @@ export const VirtualKeyboard = memo(function VirtualKeyboard({
     const lower = key.toLowerCase();
     const isNext = !disabled && !MOD_KEYS.has(key) && (
       next === lower ||
-      (upper && SHIFT_MAP[key]?.toLowerCase() === next)
+      (shiftKey && SHIFT_MAP[key]?.toLowerCase() === next)
     );
     const zone = showFingerZones ? FINGER_ZONES[lower] : null;
     let cls = "flex items-center justify-center rounded-md text-xs font-semibold transition-all duration-100 select-none ";
