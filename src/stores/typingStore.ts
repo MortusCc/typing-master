@@ -28,6 +28,7 @@ interface TypingStore {
   restoreProgress: (mode: string) => Record<string, unknown> | null;
   clearProgress: (mode: string) => void;
   restoreStats: (data: Record<string, unknown>) => void;
+  resetStats: () => void;
   getStats: () => { backspaceCount: number; totalKeystrokes: number; startTime: number | null };
 }
 

@@ -78,11 +78,11 @@ export function parseCharSeqContent(text: string): ArticleSegment[] {
 
     if (lines.length === 0) continue;
 
-    // One line per paragraph so Enter advances cleanly
-    const CHUNK_SIZE = 1;
+    // Group 5 lines per paragraph, joined by space
+    const CHUNK_SIZE = 5;
     for (let i = 0; i < lines.length; i += CHUNK_SIZE) {
       const chunk = lines.slice(i, i + CHUNK_SIZE);
-      segments.push({ type: "paragraph", content: chunk.join("\n") });
+      segments.push({ type: "paragraph", content: chunk.join(" ") });
     }
   }
 

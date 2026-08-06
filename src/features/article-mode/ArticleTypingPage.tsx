@@ -59,7 +59,7 @@ export default function ArticleTypingPage() {
     setParagraphs(paras); setTranslations(trans); setParaIdx(0);
     setTotalChars(total); setDoneChars(0);
     setShowResult(false); setSession(null);
-    if (paras.length > 0) typing.init(paras[0], id, mat.name, "sequential");
+    if (paras.length > 0) { typing.resetStats(); typing.init(paras[0], id, mat.name, "sequential"); }
     setTimeout(() => inputRef.current?.focus(), 100);
   }, [typing]);
 
@@ -76,8 +76,8 @@ export default function ArticleTypingPage() {
   const updateErrors = () => {
     const st = getTypingState();
     const inds = new Set<number>();
-    for (let i = 0; i < Math.min(st.input.length, st.target.length); i++) {
-      if (st.input[i] !== st.target[i]) inds.add(i);
+    for (let i = 0; i < st.input.length; i++) {
+      if (i >= st.target.length || st.input[i] !== st.target[i]) inds.add(i);
     }
     setErrorIndices(inds);
   };
@@ -106,7 +106,7 @@ export default function ArticleTypingPage() {
       if (e.key.length === 1) { e.preventDefault(); getTypingState().handleKey(e.key); updateErrors(); return; }
       if (e.key === "Enter") {
         const st = getTypingState();
-        if (st.cursor >= st.target.length && st.target.length > 0 && errorIndicesRef.current.size === 0) advance();
+        if (st.input.length >= st.target.length && st.target.length > 0 && errorIndicesRef.current.size === 0) advance();
         return;
       }
     };

@@ -52,6 +52,16 @@ export const FINGER_ZONES: Record<string, "left" | "right"> = {
   "\\": "right","/": "right",
 };
 
+/** Shift symbol mapping for US QWERTY keyboard */
+export const SHIFT_MAP: Record<string, string> = {
+  "`": "~", "1": "!", "2": "@", "3": "#", "4": "$", "5": "%",
+  "6": "^", "7": "&", "8": "*", "9": "(", "0": ")",
+  "-": "_", "=": "+",
+  "[": "{", "]": "}", "\\": "|",
+  ";": ":", "'": "\"",
+  ",": "<", ".": ">", "/": "?",
+};
+
 export function normalizeKey(key: string): string {
   if (key === " ") return " ";
   return key.toLowerCase();

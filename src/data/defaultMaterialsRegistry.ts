@@ -5,7 +5,7 @@ import { defaultChineseArticles } from "./defaultChineseArticles.ts";
 import { defaultEnglishFables } from "./defaultEnglishFables.ts";
 import { defaultChineseClassics } from "./defaultChineseClassics.ts";
 
-export const DEFAULT_MATERIALS_VERSION = "v6";
+export const DEFAULT_MATERIALS_VERSION = "v7";
 
 export interface DefaultMaterialDef {
   id: string;
@@ -150,9 +150,15 @@ export const DEFAULT_MATERIALS: DefaultMaterialDef[] = [
     }),
   },
   {
-    id: "builtin-char-seq",
-    name: "打字练习字符序列",
+    id: "builtin-char-seq-basic",
+    name: "打字练习字符序列·基础",
     type: "article_en",
-    buildMaterial: () => makeTxtArticleMaterial({ id: "builtin-char-seq", name: "打字练习字符序列", file: "打字练习字符序列.txt", type: "article_en", parser: parseCharSeqContent }),
+    buildMaterial: () => makeTxtArticleMaterial({ id: "builtin-char-seq-basic", name: "打字练习字符序列·基础", file: "打字练习字符序列-基础.txt", type: "article_en", parser: parseCharSeqContent }),
+  },
+  {
+    id: "builtin-char-seq-adv",
+    name: "打字练习字符序列·进阶",
+    type: "article_en",
+    buildMaterial: () => makeTxtArticleMaterial({ id: "builtin-char-seq-adv", name: "打字练习字符序列·进阶", file: "打字练习字符序列-进阶.txt", type: "article_en", parser: parseCharSeqContent }),
   },
 ];
