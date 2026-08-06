@@ -30,6 +30,8 @@ export default function ArticleTypingPage() {
   const [errorIndices, setErrorIndices] = useState<Set<number>>(new Set());
   const [shiftDown, setShiftDown] = useState(false);
   const [capsOn, setCapsOn] = useState(false);
+  const [showRestore, setShowRestore] = useState(false);
+  const [restoreData, setRestoreData] = useState<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const composingRef = useRef(false);
   const errorIndicesRef = useRef<Set<number>>(new Set());
@@ -37,6 +39,13 @@ export default function ArticleTypingPage() {
 
   useEffect(() => { refresh(); }, [refresh]);
   const articles = materials.filter((m) => m.type === "article_en" || m.type === "article_zh");
+
+  // Check for unsaved progress on mount
+  useEffect(() => {
+    if (searchParams.get("continue") === "1") return;
+    const saved = typing.restoreProgress("article");
+    if (saved && saved.materialId) { setRestoreData(saved); setShowRestore(true); }
+  }, []);
 
   // Auto-select material from URL parameter
   useEffect(() => {
@@ -60,18 +69,50 @@ export default function ArticleTypingPage() {
     setTotalChars(total); setDoneChars(0);
     setShowResult(false); setSession(null);
     if (paras.length > 0) { typing.resetStats(); typing.init(paras[0], id, mat.name, "sequential"); }
+    typing.saveProgress("article", { materialId: id, materialName: mat.name, paraIdx: 0, doneChars: 0 });
     setTimeout(() => inputRef.current?.focus(), 100);
   }, [typing]);
 
+  const doRestore = useCallback(async () => {
+    if (!restoreData) return;
+    const mat: Material | undefined = await getMaterialById(restoreData.materialId);
+    if (!mat?.segments) return;
+    const paras: string[] = [];
+    const trans: (string | undefined)[] = [];
+    let cur: string | undefined;
+    for (const seg of mat.segments) {
+      if (seg.type === "paragraph") { paras.push(seg.content); trans.push(cur); cur = undefined; }
+      else if (seg.type === "translation") { cur = seg.content; }
+    }
+    const total = paras.reduce((s, p) => s + p.length, 0);
+    const pIdx = restoreData.paraIdx ?? 0;
+    const dChars = restoreData.doneChars ?? 0;
+    setSelectedId(restoreData.materialId);
+    setParagraphs(paras); setTranslations(trans); setParaIdx(pIdx);
+    setTotalChars(total); setDoneChars(dChars);
+    setShowRestore(false);
+    if (paras.length > pIdx) { typing.resetStats(); typing.init(paras[pIdx], restoreData.materialId, mat.name, "sequential"); }
+    typing.restoreStats(restoreData);
+    setTimeout(() => inputRef.current?.focus(), 100);
+  }, [restoreData, typing]);
+
+  const dismissRestore = () => { typing.clearProgress("article"); setShowRestore(false); };
+
   const advance = useCallback(() => {
     const next = paraIdx + 1;
-    if (next >= paragraphs.length) { const s = typing.getSession(); setSession(s); setShowResult(true); return; }
-    setDoneChars((p) => p + paragraphs[paraIdx].length);
+    if (next >= paragraphs.length) {
+      const s = typing.getSession(); setSession(s); setShowResult(true);
+      typing.clearProgress("article");
+      return;
+    }
+    const newDoneChars = doneChars + paragraphs[paraIdx].length;
+    setDoneChars(newDoneChars);
     setParaIdx(next);
     typing.init(paragraphs[next], selectedId, typing.materialName, "sequential");
+    typing.saveProgress("article", { materialId: selectedId, materialName: typing.materialName, paraIdx: next, doneChars: newDoneChars });
     setErrorIndices(new Set());
     setTimeout(() => inputRef.current?.focus(), 100);
-  }, [paraIdx, paragraphs, selectedId, typing]);
+  }, [paraIdx, paragraphs, selectedId, typing, doneChars]);
 
   const updateErrors = () => {
     const st = getTypingState();
@@ -120,6 +161,7 @@ export default function ArticleTypingPage() {
     if (!paragraphs.length) return;
     setParaIdx(0); setDoneChars(0); setShowResult(false); setSession(null);
     typing.init(paragraphs[0], selectedId, typing.materialName, "sequential");
+    typing.saveProgress("article", { materialId: selectedId, materialName: typing.materialName, paraIdx: 0, doneChars: 0 });
     setTimeout(() => inputRef.current?.focus(), 100);
   };
   const handleBack = () => { typing.reset(); navigate("/"); };
@@ -135,6 +177,18 @@ export default function ArticleTypingPage() {
           {articles.map((m) => (<option key={m.id} value={m.id}>{m.name}</option>))}
         </select>
       </div>
+
+      {showRestore && restoreData && (
+        <div className="rounded-lg border-2 border-indigo-300 bg-indigo-50 p-4 dark:border-indigo-700 dark:bg-indigo-950">
+          <p className="text-sm font-medium text-indigo-800 dark:text-indigo-200">
+            发现未完成的进度: {restoreData.materialName}（第 {restoreData.paraIdx + 1} 段，已完成 {restoreData.doneChars} 字符）
+          </p>
+          <div className="mt-2 flex gap-2">
+            <Button size="sm" onClick={doRestore}>恢复</Button>
+            <Button size="sm" variant="ghost" onClick={dismissRestore}>放弃</Button>
+          </div>
+        </div>
+      )}
 
       {!selectedId && (
         <div className="rounded-xl border-2 border-dashed border-amber-300 bg-amber-50 px-6 py-10 text-center dark:border-amber-800 dark:bg-amber-950">
