@@ -7,6 +7,7 @@ import { Modal } from "../../components/ui/Modal.tsx";
 import { Button } from "../../components/ui/Button.tsx";
 import { useMaterialStore } from "../../stores/materialStore.ts";
 import { useTypingStore } from "../../stores/typingStore.ts";
+import { useStatsStore } from "../../stores/statsStore.ts";
 import { getMaterialById } from "../../services/db/repositories.ts";
 import type { Material } from "../../types/material.ts";
 import type { TypingSession } from "../../types/typing.ts";
@@ -18,6 +19,7 @@ export default function ArticleTypingPage() {
   const [searchParams] = useSearchParams();
   const { materials, refresh } = useMaterialStore();
   const typing = useTypingStore();
+  const stats = useStatsStore();
 
   const [selectedId, setSelectedId] = useState("");
   const [paragraphs, setParagraphs] = useState<string[]>([]);
@@ -164,7 +166,7 @@ export default function ArticleTypingPage() {
     typing.saveProgress("article", { materialId: selectedId, materialName: typing.materialName, paraIdx: 0, doneChars: 0 });
     setTimeout(() => inputRef.current?.focus(), 100);
   };
-  const handleBack = () => { typing.reset(); navigate("/"); };
+  const handleBack = () => { if (session) stats.recordSession(session); typing.reset(); navigate("/"); };
   const cur = paragraphs[paraIdx] ?? "";
 
   return (
@@ -207,13 +209,17 @@ export default function ArticleTypingPage() {
         <VirtualKeyboard nextKey={typing.nextKey} lastKeyResult={typing.lastKeyResult} shiftKey={shiftDown} capsLock={capsOn} disabled={false} />
       </>)}
 
-      {showResult && (
+      {showResult && session && (() => {
+        const durationSec = Math.round(session.duration / 1000);
+        const min = Math.floor(durationSec / 60);
+        const sec = durationSec % 60;
+        return (
         <Modal open={showResult} onClose={handleBack} title="成绩单">
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="rounded-lg bg-indigo-50 p-3 dark:bg-indigo-950"><p className="text-2xl font-bold text-indigo-600">{session?.wpm ?? 0}</p><p className="text-xs text-gray-500">速度</p></div>
-              <div className="rounded-lg bg-green-50 p-3 dark:bg-green-950"><p className="text-2xl font-bold text-green-600">{session?.accuracy ?? 100}%</p><p className="text-xs text-gray-500">正确率</p></div>
-              <div className="rounded-lg bg-amber-50 p-3 dark:bg-amber-950"><p className="text-2xl font-bold text-amber-600">{totalChars}</p><p className="text-xs text-gray-500">字符数</p></div>
+              <div className="rounded-lg bg-indigo-50 p-3 dark:bg-indigo-950"><p className="text-2xl font-bold text-indigo-600">{session.wpm}</p><p className="text-xs text-gray-500">WPM</p></div>
+              <div className="rounded-lg bg-green-50 p-3 dark:bg-green-950"><p className="text-2xl font-bold text-green-600">{session.backspaceCount ?? 0}/{session.totalKeystrokes ?? 0}</p><p className="text-xs text-gray-500">退格数</p></div>
+              <div className="rounded-lg bg-amber-50 p-3 dark:bg-amber-950"><p className="text-2xl font-bold text-amber-600">{min}:{sec.toString().padStart(2, "0")}</p><p className="text-xs text-gray-500">用时</p></div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="ghost" onClick={handleBack}>返回</Button>
@@ -221,7 +227,8 @@ export default function ArticleTypingPage() {
             </div>
           </div>
         </Modal>
-      )}
+        );
+      })()}
     </div>
   );
 }

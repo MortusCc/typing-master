@@ -23,7 +23,12 @@ export default function DashboardPage() {
     const avgWpm = Math.round(todays.reduce((a, s) => a + s.wpm, 0) / todays.length);
     const avgBks = Math.round(todays.reduce((a, s) => a + (s.totalKeystrokes > 0 ? s.backspaceCount / s.totalKeystrokes * 100 : 0), 0) / todays.length);
     const totalTime = todays.reduce((a, s) => a + s.duration, 0);
-    return { count: todays.length, avgWpm, avgBks, mins: Math.floor(totalTime / 60000) };
+    const totalSec = Math.floor(totalTime / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    const timeStr = h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
+    return { count: todays.length, avgWpm, avgBks, timeStr };
   }, [recentSessions]);
 
   const recentPractices = useMemo(() => {
@@ -74,7 +79,7 @@ export default function DashboardPage() {
           <Card><p className="text-xl font-bold text-indigo-600">{today.count}</p><p className="text-xs text-gray-500">今日练习</p></Card>
           <Card><p className="text-xl font-bold text-green-600">{today.avgWpm}</p><p className="text-xs text-gray-500">平均 WPM</p></Card>
           <Card><p className="text-xl font-bold text-amber-600">{today.avgBks}%</p><p className="text-xs text-gray-500">退格率</p></Card>
-          <Card><p className="text-xl font-bold text-blue-600">{today.mins}m</p><p className="text-xs text-gray-500">今日时长</p></Card>
+          <Card><p className="text-xl font-bold text-blue-600">{today.timeStr}</p><p className="text-xs text-gray-500">今日时长</p></Card>
         </div>
       ) : (
         <Card><p className="text-center text-gray-400 py-6">今日尚未练习，开始打字吧!</p></Card>

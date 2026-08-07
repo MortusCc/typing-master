@@ -15,8 +15,12 @@ export default function StatsPage() {
     const avgWpm = Math.round(recentSessions.reduce((s, x) => s + x.wpm, 0) / total);
     const avgAcc = Math.round(recentSessions.reduce((s, x) => s + (x.totalKeystrokes > 0 ? x.backspaceCount / x.totalKeystrokes * 100 : 0), 0) / total);
     const totalTime = recentSessions.reduce((s, x) => s + x.duration, 0);
-    const mins = Math.floor(totalTime / 60000);
-    return { total, avgWpm, avgAcc, mins };
+    const totalSec = Math.floor(totalTime / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    const timeStr = h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
+    return { total, avgWpm, avgAcc, timeStr };
   }, [recentSessions]);
 
   // Trend data (last 14 days)
@@ -68,7 +72,7 @@ export default function StatsPage() {
               <p className="text-xs text-gray-500">退格数</p>
             </Card>
             <Card>
-              <p className="text-2xl font-bold text-blue-600">{overview.mins}m</p>
+              <p className="text-2xl font-bold text-blue-600">{overview.timeStr}</p>
               <p className="text-xs text-gray-500">总时长</p>
             </Card>
           </div>
